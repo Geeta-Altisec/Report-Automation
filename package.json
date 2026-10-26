@@ -1,0 +1,9 @@
+{
+  "name": "altisec-soc-reports",
+  "version": "1.0.0",
+  "description": "AltiSec SOC Report Automation Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

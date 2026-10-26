@@ -1,0 +1,2081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AltiSec Report Automation Studio</title>
+    
+    <!-- GOOGLE FONTS (ROUNDED GEOMETRIC TYPOGRAPHY: OUTFIT & PLUS JAKARTA SANS) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CHART.JS, SHEETJS EXCEL & MAMMOTH WORD LIBRARIES -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- HTML2CANVAS & JSPDF ENGINE (PAGE-BY-PAGE DIRECT VECTOR/RASTER PDF PIPELINE) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- POWERPOINT EXPORT (native charts) + PPTX IMPORT READER -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- EXACT WORD DOCX PREVIEW RENDERING ENGINE (Fidelity layout, styles, tables, graphics) -->
+    <script src="docx-preview.min.js"></script>
+
+    <!-- APPLICATION STYLES -->
+    <link rel="stylesheet" href="style.css?v=86">
+    <!-- FLOATING DESIGN SYSTEM (tokens + shell + chart editor + dashboard widgets) -->
+    <link rel="stylesheet" href="theme-floating.css?v=20">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- ULTRA-CLEAN TOP HEADER BAR WITH DYNAMIC ACTION CONTAINER -->
+        <header class="top-header">
+            <div class="header-left" style="display:flex; align-items:center; gap:16px;">
+                <div class="brand-logo">
+                    <img src="assets/altisec_white_logo.png" alt="AltiSec" class="brand-logo-img" id="appBrandLogo" alt="AltiSec Logo">
+                    <span class="brand-subtitle">Report Automation Studio</span>
+                </div>
+                <nav class="app-breadcrumb" aria-label="Breadcrumb"><span>Workspace</span><i class="fa-solid fa-chevron-right"></i><strong id="appBreadcrumbCurrent">Report Studio</strong></nav>
+                <button type="button" class="cmdk-trigger" id="btnCommandPalette" onclick="openCommandPalette()" aria-label="Search modules and actions (Ctrl+K)">
+                    <i class="fa-solid fa-magnifying-glass"></i><span>Search or jump to…</span><kbd>Ctrl K</kbd>
+                </button>
+            </div>
+
+            <!-- TOP RIGHT HEADER ACTIONS CONTAINER -->
+            <div class="header-right" id="topHeaderRight" style="display:flex; align-items:center; gap:10px;">
+            </div>
+        </header>
+
+        <!-- MAIN WORKSPACE CONTENT -->
+        <main class="main-workspace">
+            
+            <!-- COLLAPSIBLE LEFT APP NAVIGATION PANEL -->
+            <aside class="app-side-nav" id="appSideNav">
+                <div class="side-nav-menu">
+                    <!-- REPORTING (PARENT DASHBOARD + DROPDOWN REPORTS, CADENCE & TEMPLATE) -->
+                    <div class="side-nav-dropdown-group" id="navGroupReportStudio" style="display:flex; flex-direction:column; gap:2px;">
+                        <button class="side-nav-item active" id="navBtnReportStudio" onclick="handleReportingNavClick(event)" title="Reporting Dashboard, Exports & Delivery Hub" style="justify-content:space-between; width:100%; display:flex; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:10px; flex:1; pointer-events:none;">
+                                <i class="fa-solid fa-chart-pie text-blue"></i>
+                                <span class="nav-label">Reporting</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down nav-arrow-icon" id="navStudioChevron" style="font-size:10px; color:#94a3b8; transition:transform 0.2s ease; transform:rotate(180deg); pointer-events:none;"></i>
+                        </button>
+                        <div class="side-nav-submenu" id="navSubmenuReportStudio" style="display:flex; flex-direction:column; gap:3px; padding-left:12px; margin-top:2px;">
+                            <button class="side-nav-subitem" id="subitemReports" onclick="switchAppView('view-studio', true)" title="Report Studio & SOC Reports" style="background:transparent; color:#94a3b8; border:1px solid transparent; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-file-invoice text-blue" style="font-size:11px; width:14px; text-align:center;"></i>
+                                <span class="nav-label">Reports</span>
+                            </button>
+                            <button class="side-nav-subitem" id="subitemCadence" onclick="switchAppView('view-cadence', true)" title="Monthly Cadence PowerPoint Presentation Studio" style="background:transparent; color:#94a3b8; border:1px solid transparent; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-file-powerpoint" style="color:#f97316; font-size:11px; width:14px; text-align:center;"></i>
+                                <span class="nav-label">Cadence</span>
+                            </button>
+                            <button class="side-nav-subitem" id="subitemTemplates" onclick="switchAppView('view-templates', true); highlightSubitemTemplates();" title="Report & Presentation Templates Hub" style="background:transparent; color:#94a3b8; border:1px solid transparent; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-layer-group" style="color:#eab308; font-size:11px; width:14px; text-align:center;"></i>
+                                <span class="nav-label">Template</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AUDIT LOGS -->
+                    <button class="side-nav-item" data-view="view-audit" onclick="switchAppView('view-audit')" title="Comprehensive Audit Logs & System Telemetry History">
+                        <i class="fa-solid fa-clock-rotate-left" style="color:#0ea5e9;"></i>
+                        <span class="nav-label">Audit Logs</span>
+                        <span class="side-nav-badge" id="auditCountBadge" style="background:#0ea5e9; color:#0f172a; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:10px; margin-left:auto;">0</span>
+                    </button>
+
+                </div>
+
+                <!-- SIDE PANEL BOTTOM FOOTER (HORIZONTAL TOOLBAR: SETTINGS, THEME, COLLAPSE) -->
+                <div class="side-nav-footer" id="sideNavFooter">
+                    <!-- 1. SETTINGS & SYSTEM CONFIGURATION -->
+                    <button class="side-nav-footer-btn" data-view="view-settings" onclick="switchAppView('view-settings')" title="Settings & System Configuration">
+                        <i class="fa-solid fa-gear" style="color:#a855f7;"></i>
+                        <span class="footer-btn-label">Settings</span>
+                    </button>
+
+                    <!-- 2. DARK / LIGHT MODE THEME TOGGLE -->
+                    <button class="side-nav-footer-btn" id="btnToggleTheme" onclick="toggleAppTheme()" title="Toggle Dark / Light Mode">
+                        <i class="fa-solid fa-moon" id="themeToggleIcon" style="color:#f59e0b;"></i>
+                        <span class="footer-btn-label" id="themeToggleText">Theme</span>
+                    </button>
+
+                    <!-- 3. SIDE PANEL COLLAPSE TOGGLE -->
+                    <button class="side-nav-footer-btn side-nav-toggle-btn" id="btnToggleSideNav" onclick="toggleAppSideNavCollapse()" title="Collapse Sidebar">
+                        <i class="fa-solid fa-angles-left" id="sideNavToggleIcon" style="color:#38bdf8;"></i>
+                        <span class="footer-btn-label" id="sideNavToggleText">Collapse</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- MAIN VIEWS CONTAINER -->
+            <div class="main-views-container" style="flex:1; display:flex; min-width:0; min-height:0; overflow:hidden; position:relative;">
+
+                <!-- VIEW 1: REPORT STUDIO (upload → processing → full-width report) -->
+                <section class="preview-area app-view hidden" id="view-studio" data-stage="upload" style="flex:1; display:flex; flex-direction:column; position:relative;">
+
+                    <!-- FLOATING EDITOR TOOLBAR -->
+                    <div class="st-toolbar" id="studioToolbar" role="toolbar" aria-label="Report editor">
+                        <div class="st-group st-grow" id="studioHeaderControls">
+                            <button type="button" class="st-btn st-report-only" id="btnStudioPanel" onclick="toggleStudioPanel()" title="Sections, data, KRIs and templates" aria-controls="studioPanel" aria-expanded="false"><i class="fa-solid fa-sliders"></i><span>Report setup</span></button>
+                            <div class="st-doc">
+                                <span>Live document</span>
+                                <strong id="previewDocTitle">TENANT - Master Template</strong>
+                            </div>
+                        </div>
+
+                        <div class="st-group st-report-only">
+                            <button type="button" class="st-icon" id="btnStudioUndo" onclick="studioUndo()" title="Undo layout or chart change (Ctrl+Z)" aria-label="Undo" disabled><i class="fa-solid fa-rotate-left"></i></button>
+                            <button type="button" class="st-icon" id="btnStudioRedo" onclick="studioRedo()" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><i class="fa-solid fa-rotate-right"></i></button>
+                            <span class="st-sep"></span>
+                            <button type="button" class="st-icon" onclick="navigateToPrevPage()" title="Previous page" aria-label="Previous page"><i class="fa-solid fa-chevron-up"></i></button>
+                            <span class="st-page" id="activePageBadge" aria-live="polite">Page 1 / 1</span>
+                            <button type="button" class="st-icon" onclick="navigateToNextPage()" title="Next page" aria-label="Next page"><i class="fa-solid fa-chevron-down"></i></button>
+                            <div class="st-seg" role="group" aria-label="Editor mode" style="display: none !important;">
+                                <button type="button" data-studio-mode="edit" onclick="setStudioMode('edit')" title="Edit mode" aria-pressed="false"><i class="fa-solid fa-pen"></i><span>Edit</span></button>
+                                <button type="button" class="active" data-studio-mode="preview" onclick="setStudioMode('preview')" title="Preview mode" aria-pressed="true"><i class="fa-solid fa-eye"></i><span>Preview</span></button>
+                            </div>
+                            <span class="st-sep"></span>
+                            <button type="button" class="st-btn st-report-only" id="btnStudioInsertImage" onclick="openImageLibrary('insert')" title="Image Library: insert or manage report images" style="padding: 4px 10px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-regular fa-image" style="color: #38bdf8;"></i><span>Images</span>
+                            </button>
+                        </div>
+
+                        <div class="st-group st-end">
+                            <label class="st-select st-report-only" title="Timeline">
+                                <i class="fa-solid fa-calendar-days"></i>
+                                <select class="styled-select-sm activePeriodFilter" aria-label="Timeline">
+                                    <option value="all">All Time</option>
+                                    <option value="june2026">01st - 30th June 2026</option>
+                                    <option value="q22026">Q2 2026 (Apr - Jun)</option>
+                                    <option value="q12026">Q1 2026</option>
+                                </select>
+                            </label>
+                            <span class="st-sep st-report-only"></span>
+                            <button type="button" class="st-btn st-report-only" id="btnClearReportData" onclick="resetAppStateToCleanTemplate(false)" title="Clear telemetry data and reset counts to 0" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3); font-weight: 700;"><i class="fa-solid fa-rotate-left"></i><span>Clear Data (0)</span></button>
+                            <span class="st-sep st-report-only"></span>
+                            <button type="button" class="st-btn st-report-only" id="btnStudioSaveDraft" title="Save the current report as a draft"><i class="fa-solid fa-floppy-disk"></i><span>Save draft</span></button>
+                            <div class="export-dropdown-wrapper st-report-only" style="position:relative;">
+                                <button type="button" class="st-btn st-primary" id="btnExportDropdown" aria-haspopup="menu"><i class="fa-solid fa-arrow-up-from-bracket"></i> Export <i class="fa-solid fa-chevron-down st-caret"></i></button>
+                                <div class="export-menu st-menu hidden" id="exportMenu" role="menu">
+                                    <button class="export-option-item" id="btnStudioAcceptReport" role="menuitem"><i class="fa-solid fa-file-circle-check"></i><div><strong>Accept report</strong><span>File it in the accepted repository</span></div></button>
+                                    <button class="export-option-item" id="btnMenuDownloadPdf" role="menuitem"><i class="fa-solid fa-file-pdf"></i><div><strong>Download PDF</strong><span>A4 file with rendered charts</span></div></button>
+                                    <button class="export-option-item" id="btnMenuExportDocx" role="menuitem"><i class="fa-solid fa-file-word"></i><div><strong>Export Word (.doc)</strong><span>Editable document with charts</span></div></button>
+                                    <button class="export-option-item" id="btnMenuPrintPdf" role="menuitem"><i class="fa-solid fa-print"></i><div><strong>Print / save as PDF</strong><span>Browser print dialog</span></div></button>
+                                    <button class="export-option-item" id="btnMenuSaveDatabase" role="menuitem"><i class="fa-solid fa-database"></i><div><strong>Save to archive</strong><span>Snapshot into the archive DB</span></div></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 1: CONFIGURE CLIENT, TEMPLATE & INGEST DATA -->
+                    <div class="st-stage st-stage-upload" id="studioUploadStage">
+                        <div class="st-stage-card st-stage-card-wide">
+                            <ol class="st-flow" aria-label="Report steps">
+                                <li class="active"><b>1</b> Setup & Ingest Data</li>
+                                <li><b>2</b> Process Telemetry</li>
+                                <li><b>3</b> Review Report</li>
+                            </ol>
+                            <h2>Configure & Generate SOC Report</h2>
+                            <p id="ingestionPaneDesc">Select your tenant, choose a report template, and fetch live incident telemetry directly from Viz 360.</p>
+
+                            <!-- STEP 1: TENANT & TEMPLATE SELECTION -->
+                            <div class="st-config-grid">
+                                <div class="st-config-box">
+                                    <label class="st-config-label" for="studioClientSelect" style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div style="display:flex; align-items:center; gap:6px;">
+                                            <i class="fa-solid fa-building-shield" style="color: #38bdf8;"></i>
+                                            <span>1. Tenant / Organization</span>
+                                        </div>
+                                        <button type="button" class="cs-link-btn" onclick="openAddClientModal(AppState.activeClient)" style="font-size:11px; color:#38bdf8; font-weight:700;" title="Upload or change tenant logo">
+                                            <i class="fa-solid fa-image"></i> Logo
+                                        </button>
+                                    </label>
+                                    <div class="st-input-group">
+                                        <select id="studioClientSelect" class="styled-select sp-select activeClientSelect" aria-label="Select Tenant">
+                                            <option value="CLIENT NAME" selected>Auto (From Telemetry Data)</option>
+                                            <option value="__add_new_client__">+ Enter Custom Tenant...</option>
+                                        </select>
+                                    </div>
+                                    <small class="st-config-hint">Report branding, title, and assets adapt to this tenant.</small>
+                                </div>
+
+                                <div class="st-config-box">
+                                    <label class="st-config-label" for="studioTemplateSelect">
+                                        <i class="fa-solid fa-layer-group" style="color: #a855f7;"></i>
+                                        <span>2. Report Template</span>
+                                        <button type="button" class="cs-link-btn ms-auto" onclick="switchAppView('view-templates')" style="font-size:11px; color:#38bdf8;">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Hub
+                                        </button>
+                                    </label>
+                                    <div class="st-input-group">
+                                        <select id="studioTemplateSelect" class="styled-select sp-select" aria-label="Select Template">
+                                            <option value="template-firstcheck-3" selected>Master Template</option>
+                                            <option value="qupod-soc-weekly">SOC MDR Weekly Report (Cyber Dark Theme)</option>
+                                            <option value="monthly-ttl-june-2026">Monthly Executive SOC Report (TTL / KRIs)</option>
+                                            <option value="voltas-soc-weekly">Executive SOC Deck (16-Page)</option>
+                                        </select>
+                                    </div>
+                                    <small class="st-config-hint" id="studioTemplateBadge">Standard SOC 16-page executive deck</small>
+                                </div>
+                            </div>
+
+                            <!-- STEP 2: VIZ 360 TELEMETRY INGESTION (7 DAYS, 30 DAYS, CUSTOM) -->
+                            <div class="st-ingest-viz-panel" style="margin-top: 14px; background: linear-gradient(180deg, rgba(14, 165, 233, 0.08) 0%, rgba(15, 23, 42, 0.75) 100%); border: 1px solid rgba(14, 165, 233, 0.35); border-radius: 12px; padding: 20px 24px; text-align: left;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span class="st-ingest-badge st-badge-viz"><i class="fa-solid fa-bolt"></i> Live Telemetry</span>
+                                        <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #f8fafc;">Viz 360 Incident Telemetry Sync</h4>
+                                    </div>
+                                    <div class="st-viz-status-bar" style="margin-bottom: 0; gap: 14px;">
+                                        <span><i class="fa-solid fa-circle" style="color: #22c55e;"></i> Gateway: <strong>Live & Connected</strong></span>
+                                        <span id="viz360RangeLabel" style="font-weight: 700; color: #38bdf8;">7 Days Telemetry Selected</span>
+                                    </div>
+                                </div>
+                                <p class="st-ingest-sub" style="margin-bottom: 14px;">Fetch incident telemetry automatically by choosing a reporting timeframe:</p>
+
+                                <!-- 3 TIMEFRAME OPTIONS: 7 DAYS, 30 DAYS, CUSTOM -->
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                    <div class="st-viz-presets" style="margin-bottom: 0; display: flex; gap: 8px;">
+                                        <button type="button" class="st-viz-preset-btn active" data-range="7d" style="padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 7px;">
+                                            <i class="fa-solid fa-calendar-week"></i> 7 Days
+                                        </button>
+                                        <button type="button" class="st-viz-preset-btn" data-range="30d" style="padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 7px;">
+                                            <i class="fa-solid fa-calendar"></i> 30 Days
+                                        </button>
+                                        <button type="button" class="st-viz-preset-btn" data-range="custom" style="padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 7px;">
+                                            <i class="fa-solid fa-sliders"></i> Custom
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- TIMELINE DATE & TIME PICKER -->
+                                <div class="st-timeline-picker" id="viz360TimelinePicker" style="margin-bottom: 16px; background: rgba(11, 17, 32, 0.85); border: 1px solid rgba(56, 189, 248, 0.25);">
+                                    <div class="st-time-field">
+                                        <label for="viz360StartDateTime"><i class="fa-solid fa-clock-rotate-left" style="color: #38bdf8;"></i> Start Date & Time</label>
+                                        <input type="datetime-local" id="viz360StartDateTime" class="styled-input sp-input">
+                                    </div>
+                                    <div class="st-time-arrow"><i class="fa-solid fa-arrow-right" style="color: #38bdf8;"></i></div>
+                                    <div class="st-time-field">
+                                        <label for="viz360EndDateTime"><i class="fa-solid fa-flag-checkered" style="color: #38bdf8;"></i> End Date & Time</label>
+                                        <input type="datetime-local" id="viz360EndDateTime" class="styled-input sp-input">
+                                    </div>
+                                </div>
+
+                                <!-- PRIMARY FETCH BUTTON -->
+                                <button type="button" class="st-btn st-primary cs-block" id="btnViz360Fetch" style="background: linear-gradient(135deg, #0284c7, #2563eb); border: none; font-weight: 800; font-size: 13.5px; padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 14px rgba(37,99,235,0.35); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <i class="fa-solid fa-cloud-arrow-down" style="font-size: 15px;"></i> Fetch Telemetry from Viz 360 & Generate Report
+                                </button>
+                            </div>
+
+                            <!-- Hidden file input preserved for background compatibility -->
+                            <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" hidden>
+
+                            <div style="margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 20px;">
+                                <button type="button" class="cs-link-btn st-skip" onclick="skipStudioUpload()" style="margin-top:0; font-size:12.5px;">
+                                    <i class="fa-solid fa-arrow-right me-1"></i> Open template directly with current state
+                                </button>
+                                <span style="color: #64748b; font-size: 12px;">|</span>
+                                <button type="button" class="cs-link-btn" onclick="resetAppStateToCleanTemplate(false)" style="margin-top:0; font-size:12.5px; color: #ef4444;" title="Start with 0 incidents across all tables and charts">
+                                    <i class="fa-solid fa-file-circle-minus me-1"></i> Open Blank Report (0 Incidents)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: PROCESSING -->
+                    <div class="st-stage st-stage-loading" id="studioLoadingStage" role="status" aria-live="polite">
+                        <div class="st-stage-card">
+                            <ol class="st-flow" aria-hidden="true">
+                                <li class="done"><b><i class="fa-solid fa-check"></i></b> Upload data</li>
+                                <li class="active"><b>2</b> Process</li>
+                                <li><b>3</b> Review report</li>
+                            </ol>
+                            <div class="st-spinner" aria-hidden="true"></div>
+                            <h2>Building your report</h2>
+                            <p>Processing <strong id="studioLoadingFile">your data</strong></p>
+                            <ul class="st-steps">
+                                <li style="--i:0"><i class="fa-solid fa-circle-check"></i> Reading the workbook</li>
+                                <li style="--i:1"><i class="fa-solid fa-circle-check"></i> Extracting severities, SLAs, MITRE tactics & hosts</li>
+                                <li style="--i:2"><i class="fa-solid fa-circle-check"></i> Laying out pages and charts</li>
+                            </ul>
+                            <div class="st-progress"><i></i></div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: FULL-WIDTH REPORT -->
+                    <div class="paper-scroll-wrapper" id="paperScrollWrapper" style="position:relative;">
+                        <div id="a4DocumentPreview">
+                            <!-- Pages rendered dynamically by renderLivePreview() -->
+                        </div>
+                    </div>
+
+                    <!-- REPORT SETUP PANEL (floating, like the chart inspector) -->
+                    <aside class="sp-panel" id="studioPanel" role="dialog" aria-label="Report setup" hidden data-html2canvas-ignore="true">
+                        <div class="ce-insp-head">
+                            <div><h3>Report setup</h3><p>Text and figures: edit on the page</p></div>
+                            <span class="ce-spacer"></span>
+                            <button type="button" class="ce-icon-btn" onclick="closeStudioPanel()" title="Close (Esc)" aria-label="Close report setup"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="ce-insp-tabs sp-tabs" role="tablist">
+                            <button class="tab-btn active" data-tab="tab-layout" id="tabBtnLayout" role="tab">Sections</button>
+                            <button class="tab-btn" data-tab="tab-ingestion" role="tab">Data</button>
+                        </div>
+                        <div class="ce-insp-body">
+
+                            <!-- SECTIONS & PRESENTATION -->
+                            <div class="tab-pane active" id="tab-layout">
+                                <div class="ce-sec" id="card-kpi-sections">
+                                    <div class="cs-head">
+                                        <h4>Report sections</h4>
+                                        <button type="button" class="cs-link-btn" onclick="resetStudioSectionLayout()" title="Restore the default order and include every section">Reset</button>
+                                    </div>
+                                    <p class="cs-note" id="studioSectionsNote">Tick the sections to include. Drag to reorder pages.</p>
+                                    <ol class="st-sections" id="studioSectionList" aria-label="Report sections"></ol>
+                                </div>
+                                <div class="ce-sec">
+                                    <h4>Presentation preset</h4>
+                                    <p class="cs-note">Changes styling only. Data and required sections stay as they are.</p>
+                                    <div class="st-presets" id="studioPresetGrid" role="radiogroup" aria-label="Presentation preset"></div>
+                                </div>
+                            </div>
+
+                            <!-- DATA & TEMPLATE -->
+                            <div class="tab-pane hidden" id="tab-ingestion">
+                                <div class="ce-sec">
+                                    <h4>Data source</h4>
+                                    <div id="excelFileInfo" class="file-info-bar cs-file-ok hidden">
+                                        <i class="fa-solid fa-file-circle-check"></i>
+                                        <div>
+                                            <strong id="excelFileName">—</strong>
+                                            <span>Telemetry extracted & report updated</span>
+                                        </div>
+                                        <button id="btnRemoveExcel" class="cs-icon-btn cs-danger" title="Clear data and start over" aria-label="Clear data and start over"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                    <button type="button" class="st-btn cs-block mt-2" onclick="showStudioUpload()"><i class="fa-solid fa-cloud-arrow-down"></i> Sync Viz 360 Telemetry</button>
+                                    <button type="button" class="st-btn cs-block mt-2" onclick="resetAppStateToCleanTemplate(false)" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);"><i class="fa-solid fa-rotate-left"></i> Reset all telemetry to 0</button>
+                                </div>
+                                <div class="ce-sec">
+                                    <div class="cs-head">
+                                        <h4>Assigned Tenant / Customer</h4>
+                                    </div>
+                                    <select id="headerCustomerSelect" class="styled-select sp-select activeClientSelect" aria-label="Tenant / Customer">
+                                        <option value="CLIENT NAME" selected>Auto (From Uploaded Sheet)</option>
+                                    </select>
+                                    <p class="cs-note">Select tenant organization to switch branding, title, and mapped templates.</p>
+                                </div>
+                                <div class="ce-sec">
+                                    <div class="cs-head">
+                                        <h4>Active Template</h4>
+                                        <button type="button" class="cs-link-btn" onclick="switchAppView('view-templates'); closeStudioPanel();" title="Manage, edit, or add templates in the dedicated Template Manager" style="font-weight:700; color:#38bdf8;">
+                                            <i class="fa-solid fa-layer-group me-1"></i> Manage Templates &rarr;
+                                        </button>
+                                    </div>
+                                    <select id="headerTemplateSelect" class="styled-select sp-select" aria-label="Report template">
+                                        <option value="template-firstcheck-3" selected>Master Template</option>
+                                        <option value="qupod-soc-weekly">SOC MDR Report (Cyber Dark Theme)</option>
+                                        <option value="monthly-ttl-june-2026">Monthly Executive SOC Report</option>
+                                        <option value="voltas-soc-weekly">Executive SOC Deck (16-Page)</option>
+                                    </select>
+                                    <p class="cs-note">To add, search, edit, or remove templates, use the dedicated <a href="javascript:void(0)" onclick="switchAppView('view-templates'); closeStudioPanel();" style="color:#38bdf8; font-weight:700;">Template Manager</a>.</p>
+                                </div>
+                                <div class="ce-sec" id="card-chart-data-editor">
+                                    <div class="cs-head">
+                                        <h4>Edit Chart Data</h4>
+                                    </div>
+                                    <div class="cs-row mb-2">
+                                        <select id="studioChartSelect" class="styled-select sp-select" aria-label="Select Chart to Edit">
+                                            <option value="previewSeverityChart">Incidents by Status (Open vs Closed)</option>
+                                            <option value="previewOverallSevChart">Severity-wise Overall Incidents</option>
+                                            <option value="previewClosedSevChart">Closed Severity-wise Incidents</option>
+                                            <option value="previewTrendChart">Incidents Created — Daily Trend</option>
+                                            <option value="previewAlertNamesChart">Alert Names Distribution</option>
+                                            <option value="previewMitreTacticsChart">MITRE ATT&CK Tactics</option>
+                                            <option value="previewMitreTechniquesChart">MITRE ATT&CK Techniques</option>
+                                            <option value="previewCategoryChart">Incident / Case Category</option>
+                                            <option value="previewAssetTypeChart">Asset Type Distribution</option>
+                                            <option value="previewUsernamesChart">Usernames Triggered</option>
+                                            <option value="previewHostnameChart">Hostnames Triggered</option>
+                                            <option value="previewSlaCompliancePieChart">SLA Compliance</option>
+                                            <option value="previewMttrResponseChart">MTTR — Response Time</option>
+                                            <option value="previewMttrResolutionChart">MTTR — Resolution Time</option>
+                                            <option value="previewMttdChart">MTTD — Detection Time</option>
+                                            <option value="previewMttaChart">MTTA — Acknowledge Time</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="st-btn cs-block" onclick="openSelectedChartEditor()"><i class="fa-solid fa-chart-line"></i> Open Chart Data Editor</button>
+                                    <p class="cs-note">Edit chart values, labels, and series live in the preview.</p>
+                                </div>
+                            </div>
+
+                            <!-- KRI SELECTION -->
+                            <div class="tab-pane hidden" id="tab-kri">
+                                <div class="ce-sec" id="card-core-kris">
+                                    <h4>Key risk indicators</h4>
+                                    <p class="cs-note">Tick the KRIs to show on the risk page. Values come from the uploaded data.</p>
+                                    <div id="kriManagerListContainer" class="cs-stack"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- FLOATING ZOOM POD -->
+                    <div class="floating-zoom-pod st-zoom" id="floatingZoomPod">
+                        <button type="button" class="st-icon" id="btnZoomOut" title="Zoom out" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
+                        <span id="zoomLevelText">100%</span>
+                        <button type="button" class="st-icon" id="btnZoomIn" title="Zoom in" aria-label="Zoom in"><i class="fa-solid fa-plus"></i></button>
+                        <span class="st-sep"></span>
+                        <button type="button" class="st-icon" id="btnRefreshPreview" title="Clear data and start over" aria-label="Clear data and start over"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+
+                </section>
+
+                <!-- VIEW 1: REPORTING DASHBOARD & OPERATIONS DISPATCH HUB -->
+                <section class="reporting-dashboard-area app-view active fx-view" id="view-dashboard">
+                    <!-- HEADER & TIME SYSTEM CONTROLS -->
+                    <header class="fx-head" style="margin-bottom:4px;">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <h2 style="display:flex; align-items:center; gap:8px; margin:0; font-size:20px; font-weight:800; color:#f8fafc;">
+                                    <i class="fa-solid fa-chart-pie" style="color:#0ea5e9;"></i> Reporting Operations Dashboard
+                                </h2>
+                                <span class="audit-pulse-badge" style="background:rgba(14,165,233,0.12); color:#38bdf8; border:1px solid rgba(14,165,233,0.3); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                                    <span class="live-pulse-dot" style="width:6px; height:6px; border-radius:50%; background:#22c55e;"></span> System Active
+                                </span>
+                            </div>
+                            <p style="margin:4px 0 0; font-size:12px; color:#94a3b8;">
+                                Live telemetry overview tracking exported reports, tenant delivery pipeline, accepted reports repository, and cadence decks.
+                            </p>
+                        </div>
+                        <div class="fx-actions view-header-filters">
+                            <!-- TIME SYSTEM CONTROLS -->
+                            <div class="dash-time-system" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <div class="cs-seg fx-filter" role="tablist" aria-label="Time Filter" style="background:rgba(255,255,255,0.04); padding:2px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); display:flex; gap:2px;">
+                                    <button type="button" class="btn-time-filter active" data-range="all" onclick="setDashboardTimeRange('all', this)" style="padding:4px 10px; font-size:11px; font-weight:700; border-radius:6px; border:none; background:rgba(14,165,233,0.25); color:#38bdf8; cursor:pointer;">All Time</button>
+                                    <button type="button" class="btn-time-filter" data-range="today" onclick="setDashboardTimeRange('today', this)" style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:none; background:transparent; color:#94a3b8; cursor:pointer;">Today</button>
+                                    <button type="button" class="btn-time-filter" data-range="this_week" onclick="setDashboardTimeRange('this_week', this)" style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:none; background:transparent; color:#94a3b8; cursor:pointer;">This Week</button>
+                                    <button type="button" class="btn-time-filter" data-range="this_month" onclick="setDashboardTimeRange('this_month', this)" style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:none; background:transparent; color:#94a3b8; cursor:pointer;">This Month</button>
+                                </div>
+
+                                <label class="st-select" title="Tenant Filter" style="margin:0;">
+                                    <i class="fa-solid fa-building-user"></i>
+                                    <select class="styled-select-sm" id="dashClientFilterSelect" onchange="filterDashboardByClient(this.value)" aria-label="Tenant / Customer" style="padding:5px 10px 5px 28px; font-size:11px; border-radius:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#f8fafc;">
+                                        <option value="ALL" selected>All Tenants</option>
+                                    </select>
+                                </label>
+
+                                <div class="dash-live-clock-pill" id="dashLiveClock" style="display:flex; align-items:center; gap:6px; font-size:11px; color:#94a3b8; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:5px 10px; border-radius:8px;">
+                                    <i class="fa-solid fa-clock" style="color:#0ea5e9;"></i>
+                                    <span id="dashLiveClockText">Loading time...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- EXECUTIVE KPI STAT CARDS (HOW MANY EXPORTED, PENDING TO SEND CLIENT, SENT, ACCEPTED REPO) -->
+                    <div class="reporting-kpi-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+                        <!-- KPI 1: HOW MANY REPORTS EXPORTED -->
+                        <div class="reporting-kpi-card" id="cardKpiExported" style="background:#111827; border:1px solid rgba(14,165,233,0.3); border-radius:12px; padding:16px; position:relative; overflow:hidden;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <span style="font-size:10.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">TOTAL EXPORTED REPORTS</span>
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(14,165,233,0.15); display:flex; align-items:center; justify-content:center; color:#38bdf8; font-size:15px;">
+                                    <i class="fa-solid fa-file-export"></i>
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;">
+                                <h3 id="statTotalExported" style="font-size:32px; font-weight:800; color:#f8fafc; margin:0; line-height:1; font-family:Montserrat, sans-serif;">0</h3>
+                                <div style="display:flex; align-items:center; gap:6px; margin-top:10px; flex-wrap:wrap;">
+                                    <span class="badge" id="badgePdfExports" style="background:rgba(14,165,233,0.15); color:#38bdf8; font-size:10px; padding:2px 7px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-file-pdf me-1"></i>0 PDF</span>
+                                    <span class="badge" id="badgeDocxExports" style="background:rgba(59,130,246,0.15); color:#60a5fa; font-size:10px; padding:2px 7px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-file-word me-1"></i>0 DOCX</span>
+                                    <span class="badge" id="badgePptxExports" style="background:rgba(249,115,22,0.15); color:#fb923c; font-size:10px; padding:2px 7px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-file-powerpoint me-1"></i>0 PPTX</span>
+                                </div>
+                            </div>
+                            <span style="font-size:11px; color:#64748b; margin-top:10px; display:block;"><i class="fa-solid fa-arrow-down-to-bracket me-1"></i> Downloaded to disk & archived</span>
+                        </div>
+
+                        <!-- KPI 2: PENDING TO SEND TENANT -->
+                        <div class="reporting-kpi-card" id="cardKpiPending" style="background:#111827; border:1px solid rgba(245,158,11,0.3); border-radius:12px; padding:16px; position:relative; overflow:hidden;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <span style="font-size:10.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">PENDING TO SEND TENANT</span>
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; color:#f59e0b; font-size:15px;">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;">
+                                <h3 id="statPendingClient" style="font-size:32px; font-weight:800; color:#fbbf24; margin:0; line-height:1; font-family:Montserrat, sans-serif;">0</h3>
+                                <div style="display:flex; align-items:center; gap:6px; margin-top:10px;">
+                                    <span class="badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;"><i class="fa-solid fa-hourglass-half me-1"></i> Awaiting Delivery</span>
+                                </div>
+                            </div>
+                            <span style="font-size:11px; color:#64748b; margin-top:10px; display:block;"><i class="fa-solid fa-bell me-1"></i> Accepted reports ready for dispatch</span>
+                        </div>
+
+                        <!-- KPI 3: DELIVERED / SENT TO TENANTS -->
+                        <div class="reporting-kpi-card" id="cardKpiSent" style="background:#111827; border:1px solid rgba(34,197,94,0.3); border-radius:12px; padding:16px; position:relative; overflow:hidden;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <span style="font-size:10.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">SENT TO TENANTS</span>
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(34,197,94,0.15); display:flex; align-items:center; justify-content:center; color:#22c55e; font-size:15px;">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;">
+                                <h3 id="statSentClient" style="font-size:32px; font-weight:800; color:#4ade80; margin:0; line-height:1; font-family:Montserrat, sans-serif;">0</h3>
+                                <div style="display:flex; align-items:center; gap:6px; margin-top:10px;">
+                                    <span class="badge" style="background:rgba(34,197,94,0.2); color:#4ade80; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;"><i class="fa-solid fa-check-double me-1"></i> Delivered</span>
+                                </div>
+                            </div>
+                            <span style="font-size:11px; color:#64748b; margin-top:10px; display:block;"><i class="fa-solid fa-envelope-circle-check me-1"></i> Dispatched to tenant stakeholders</span>
+                        </div>
+
+                        <!-- KPI 4: ACCEPTED REPORTS REPOSITORY TOTAL -->
+                        <div class="reporting-kpi-card" id="cardKpiAccepted" style="background:#111827; border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:16px; position:relative; overflow:hidden;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <span style="font-size:10.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">ACCEPTED REPOSITORY</span>
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(168,85,247,0.15); display:flex; align-items:center; justify-content:center; color:#c084fc; font-size:15px;">
+                                    <i class="fa-solid fa-box-archive"></i>
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;">
+                                <h3 id="statTotalAccepted" style="font-size:32px; font-weight:800; color:#e9d5ff; margin:0; line-height:1; font-family:Montserrat, sans-serif;">0</h3>
+                                <div style="display:flex; align-items:center; gap:6px; margin-top:10px; flex-wrap:wrap;">
+                                    <span class="badge" id="badgeDraftsCount" style="background:rgba(168,85,247,0.2); color:#c084fc; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;"><i class="fa-solid fa-floppy-disk me-1"></i>0 Drafts</span>
+                                    <span class="badge" id="badgeCadenceCount" style="background:rgba(249,115,22,0.2); color:#fb923c; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;"><i class="fa-solid fa-file-powerpoint me-1"></i>0 Decks</span>
+                                </div>
+                            </div>
+                            <span style="font-size:11px; color:#64748b; margin-top:10px; display:block;"><i class="fa-solid fa-database me-1"></i> Persistent snapshots in workspace</span>
+                        </div>
+                    </div>
+
+                    <!-- REPOSITORY PIPELINE TABS & ACTIONS TOOLBAR -->
+                    <div class="fx-toolbar" style="margin-top:4px;">
+                        <div class="cs-seg fx-filter repo-sub-tabs" role="tablist" aria-label="Repository Pipeline" style="display:flex; gap:3px; flex-wrap:wrap;">
+                            <button type="button" class="repo-tab-btn active" data-dash-tab="pane-dash-pending" onclick="switchDashboardTab('pane-dash-pending', this)">
+                                <i class="fa-solid fa-hourglass-half" style="color:#f59e0b;"></i> Pending to Send <span id="dashPendingBadge" style="background:rgba(245,158,11,0.25); color:#fbbf24; padding:1px 6px; border-radius:10px; font-size:10px; font-weight:800; margin-left:4px;">0</span>
+                            </button>
+                            <button type="button" class="repo-tab-btn" data-dash-tab="pane-dash-sent" onclick="switchDashboardTab('pane-dash-sent', this)">
+                                <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> Sent to Tenant <span id="dashSentBadge" style="background:rgba(34,197,94,0.25); color:#4ade80; padding:1px 6px; border-radius:10px; font-size:10px; font-weight:800; margin-left:4px;">0</span>
+                            </button>
+                            <button type="button" class="repo-tab-btn" data-dash-tab="pane-dash-accepted" onclick="switchDashboardTab('pane-dash-accepted', this)">
+                                <i class="fa-solid fa-file-circle-check" style="color:#0ea5e9;"></i> All Accepted Reports <span id="dashAcceptedBadge" style="background:rgba(14,165,233,0.25); color:#38bdf8; padding:1px 6px; border-radius:10px; font-size:10px; font-weight:800; margin-left:4px;">0</span>
+                            </button>
+                            <button type="button" class="repo-tab-btn" data-dash-tab="pane-dash-cadence" onclick="switchDashboardTab('pane-dash-cadence', this)">
+                                <i class="fa-solid fa-file-powerpoint" style="color:#f97316;"></i> Cadence Decks <span id="dashCadenceBadge" style="background:rgba(249,115,22,0.25); color:#fb923c; padding:1px 6px; border-radius:10px; font-size:10px; font-weight:800; margin-left:4px;">0</span>
+                            </button>
+                            <button type="button" class="repo-tab-btn" data-dash-tab="pane-dash-drafts" onclick="switchDashboardTab('pane-dash-drafts', this)">
+                                <i class="fa-solid fa-floppy-disk" style="color:#a855f7;"></i> Drafts <span id="dashDraftsBadge" style="background:rgba(168,85,247,0.25); color:#c084fc; padding:1px 6px; border-radius:10px; font-size:10px; font-weight:800; margin-left:4px;">0</span>
+                            </button>
+                        </div>
+
+                        <!-- SEARCH INPUT -->
+                        <div class="fx-search" style="margin-left:auto; min-width:220px;">
+                            <input type="text" id="dashSearchInput" placeholder="Search customer, template, period..." oninput="handleDashboardSearch(this.value)" class="styled-input-sm" style="width:100%; border-radius:6px; padding:6px 12px; font-size:11.5px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#f8fafc;">
+                        </div>
+
+                        <!-- QUICK SHORTCUT BUTTONS -->
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button type="button" class="st-btn st-primary" onclick="switchAppView('view-studio', true)" title="Open Report Studio generator" style="font-size:11px; padding:6px 12px; font-weight:700; background:linear-gradient(135deg, #0ea5e9, #0284c7); border:none; border-radius:6px; color:#fff; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                                <i class="fa-solid fa-plus"></i> New Report
+                            </button>
+                            <button type="button" class="st-btn cs-danger" onclick="clearAcceptedReportsRepo()" title="Remove every accepted report" style="font-size:11px; padding:6px 10px; font-weight:600; border-radius:6px; cursor:pointer;">
+                                <i class="fa-solid fa-trash-can"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TAB 1: PENDING TO SEND CLIENT PANE -->
+                    <div class="repo-tab-pane active" id="pane-dash-pending">
+                        <div id="pendingClientReportsContainer"></div>
+                    </div>
+
+                    <!-- TAB 2: SENT TO CLIENT PANE -->
+                    <div class="repo-tab-pane hidden" id="pane-dash-sent">
+                        <div id="sentClientReportsContainer"></div>
+                    </div>
+
+                    <!-- TAB 3: ALL ACCEPTED REPORTS PANE -->
+                    <div class="repo-tab-pane hidden" id="pane-dash-accepted">
+                        <div id="acceptedReportsContainer"></div>
+                    </div>
+
+                    <!-- TAB 4: CADENCE DECKS PANE -->
+                    <div class="repo-tab-pane hidden" id="pane-dash-cadence">
+                        <div id="acceptedCadencePptsContainer"></div>
+                    </div>
+
+                    <!-- TAB 5: DRAFTS PANE -->
+                    <div class="repo-tab-pane hidden" id="pane-dash-drafts">
+                        <div id="savedDraftsContainer"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW 4: CADENCE DECK STUDIO (NAVIGATOR · CANVAS · INSPECTOR) -->
+                <section class="cadence-area app-view hidden" id="view-cadence">
+                    <div class="st-toolbar cd-toolbar" role="toolbar" aria-label="Deck editor">
+                        <div class="st-group st-grow">
+                            <span class="cd-logo" aria-hidden="true"><i class="fa-solid fa-file-powerpoint"></i></span>
+                            <div class="st-doc">
+                                <span>Cadence deck</span>
+                                <strong id="cadenceTitleText">TENANT - Monthly Executive Presentation</strong>
+                            </div>
+                        </div>
+                        <div class="st-group">
+                            <button type="button" class="st-icon" id="btnPrevCadenceSlide" title="Previous slide" aria-label="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span class="st-page" id="cadenceSlideCounter" aria-live="polite">Slide 3 / 4</span>
+                            <button type="button" class="st-icon" id="btnNextCadenceSlide" title="Next slide" aria-label="Next slide"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        <div class="st-group st-end">
+                            <button type="button" class="st-icon" id="btnCadenceUndo" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><i class="fa-solid fa-rotate-left"></i></button>
+                            <button type="button" class="st-icon" id="btnCadenceRedo" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><i class="fa-solid fa-rotate-right"></i></button>
+                            <button type="button" class="st-btn" id="btnAddCadenceSlide"><i class="fa-solid fa-plus"></i> Slide</button>
+                            <button type="button" class="st-btn" id="btnSaveCadenceDraft"><i class="fa-solid fa-floppy-disk"></i> Save draft</button>
+                            <button type="button" class="st-btn st-primary cd-primary" id="btnExportCadencePptx"><i class="fa-solid fa-file-powerpoint"></i> Export PPTX</button>
+                        </div>
+                    </div>
+
+                    <div class="cd-workspace">
+                        <!-- SLIDE NAVIGATOR -->
+                        <aside class="cd-nav" aria-label="Slides">
+                            <div class="cd-head"><h4>Slides</h4><span class="cs-chip" id="cadenceSlideCount">4</span></div>
+                            <ol class="cd-thumbs" id="cadenceSlideNav">
+                                <!-- Rendered by cadence_deck.js -->
+                            </ol>
+                            <p class="cs-note">Drag or use the arrows to reorder. Duplicate a slide to reuse its layout.</p>
+                        </aside>
+
+                        <!-- SLIDE CANVAS (rendered by cadence_deck.js at 1280x720, scaled to fit) -->
+                        <main class="cd-stage">
+                            <div class="cx-fit" id="cadenceSlideFit"><div class="cx-stage" id="cadenceSlideStage"></div></div>
+                            <p class="cx-overflow" id="cadenceOverflowWarn" hidden><i class="fa-solid fa-triangle-exclamation"></i> Content runs past the bottom of this slide — narrow a block, remove rows, or split it across two slides.</p>
+                            <p class="cd-hint"><i class="fa-solid fa-i-cursor"></i> Click any text, number or table cell to edit it. Hover a block for layout tools; use <b>Chart</b> on a chart to change its type, data and style.</p>
+                        </main>
+
+                        <!-- PROPERTIES INSPECTOR -->
+                        <aside class="cd-inspector" aria-label="Slide properties">
+                            <div class="cd-tabs" role="tablist">
+                                <button type="button" class="cadence-tab-btn active" data-cadence-tab="cadence-pane-data" role="tab">Properties</button>
+                                <button type="button" class="cadence-tab-btn" data-cadence-tab="cadence-pane-upload" role="tab">Templates</button>
+                                <button type="button" class="cadence-tab-btn" data-cadence-tab="cadence-pane-customers" role="tab">Customers</button>
+                            </div>
+
+                            <div class="cadence-pane" id="cadence-pane-data">
+                                <div id="cadenceDynamicFormContainer" class="cs-stack">
+                                    <!-- Rendered by cadence_deck.js -->
+                                </div>
+                            </div>
+
+                            <div class="cadence-pane hidden" id="cadence-pane-upload">
+                                <label class="cs-label">Deck templates</label>
+                                <div id="cadenceTemplateList" class="cs-stack"></div>
+                                <label class="cs-label" style="margin-top:14px">Import an existing PowerPoint</label>
+                                <div class="file-dropzone cs-dropzone" id="cadencePptxDropzone">
+                                    <i class="fa-solid fa-file-powerpoint drop-icon cd-accent"></i>
+                                    <div class="drop-text">
+                                        <strong>Drop a .pptx deck</strong>
+                                        <span>or click to browse. Titles, text, tables, native charts (with their data) and pictures become editable blocks.</span>
+                                    </div>
+                                    <input type="file" id="cadencePptxInput" accept=".pptx" class="hidden-file-input" aria-label="Import PPTX deck">
+                                </div>
+                            </div>
+
+                            <div class="cadence-pane hidden" id="cadence-pane-customers">
+                                <p class="cs-note">Saved presentations grouped by customer.</p>
+                                <div id="cadenceCustomerListContainer" class="cs-stack">
+                                    <!-- Rendered by renderCadenceCustomerList() -->
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </section>
+
+                <!-- VIEW 5: COMPREHENSIVE AUDIT LOGS & SYSTEM TELEMETRY -->
+                <section class="audit-area app-view hidden fx-view" id="view-audit">
+                    <header class="fx-head">
+                        <div>
+                            <h2>Compliance audit trail</h2>
+                            <p>Every report, deck, ingestion and export action, newest first. Select a row to inspect its record and integrity proof.</p>
+                        </div>
+                        <div class="fx-actions audit-header-actions">
+                            <span class="audit-pulse-badge"><span class="live-pulse-dot"></span> Recording</span>
+                            <button type="button" class="st-btn" id="btnSimulateTelemetry" onclick="simulateAuditTelemetryEvent()" title="Add a sample event to the trail"><i class="fa-solid fa-bolt"></i> Simulate event</button>
+                            <button type="button" class="st-btn" id="btnExportAuditCsv" title="Export logs as CSV"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                            <button type="button" class="st-btn" id="btnExportAuditJson" onclick="exportAuditLogsJson()" title="Export logs as JSON"><i class="fa-solid fa-file-code"></i> JSON</button>
+                            <button type="button" class="st-icon cs-danger" id="btnClearAuditLogs" title="Clear audit trail" aria-label="Clear audit trail"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </header>
+
+                    <!-- INTERACTIVE AUDIT KPI STAT CARDS -->
+                    <div class="audit-kpi-grid">
+                        <div class="audit-kpi-card kpi-blue active" id="auditKpiCardAll" onclick="filterAuditByCategory('all')">
+                            <div class="audit-kpi-header">
+                                <span class="audit-kpi-label">TOTAL LOGGED EVENTS</span>
+                                <div class="audit-kpi-icon-wrap icon-blue">
+                                    <i class="fa-solid fa-clipboard-list"></i>
+                                </div>
+                            </div>
+                            <div class="audit-kpi-body">
+                                <h3 id="auditStatTotalEvents" class="audit-kpi-value">0</h3>
+                                <span class="audit-kpi-subtext"><i class="fa-solid fa-list-check me-1"></i> All telemetry events</span>
+                            </div>
+                            <div class="audit-kpi-active-pill">All Active</div>
+                        </div>
+
+                        <div class="audit-kpi-card kpi-green" id="auditKpiCardReport" onclick="filterAuditByCategory('report')">
+                            <div class="audit-kpi-header">
+                                <span class="audit-kpi-label">REPORT GENERATIONS</span>
+                                <div class="audit-kpi-icon-wrap icon-green">
+                                    <i class="fa-solid fa-file-circle-check"></i>
+                                </div>
+                            </div>
+                            <div class="audit-kpi-body">
+                                <h3 id="auditStatReportEvents" class="audit-kpi-value value-green">0</h3>
+                                <span class="audit-kpi-subtext"><i class="fa-solid fa-filter me-1"></i> Filter report events</span>
+                            </div>
+                            <div class="audit-kpi-active-pill">Filtered</div>
+                        </div>
+
+                        <div class="audit-kpi-card kpi-orange" id="auditKpiCardCadence" onclick="filterAuditByCategory('cadence')">
+                            <div class="audit-kpi-header">
+                                <span class="audit-kpi-label">CADENCE EDITS</span>
+                                <div class="audit-kpi-icon-wrap icon-orange">
+                                    <i class="fa-solid fa-file-powerpoint"></i>
+                                </div>
+                            </div>
+                            <div class="audit-kpi-body">
+                                <h3 id="auditStatCadenceEvents" class="audit-kpi-value value-orange">0</h3>
+                                <span class="audit-kpi-subtext"><i class="fa-solid fa-filter me-1"></i> Filter Cadence events</span>
+                            </div>
+                            <div class="audit-kpi-active-pill">Filtered</div>
+                        </div>
+                    </div>
+
+                    <!-- UNIFIED AUDIT CONTROLS & FILTER TOOLBAR (REARRANGED PROPERLY) -->
+                    <div class="audit-toolbar-card">
+                        <!-- ROW 1: QUICK CATEGORY FILTER CHIPS -->
+                        <div class="audit-chips-bar" id="auditChipsBar">
+                            <button class="audit-filter-chip active" data-cat="all" onclick="filterAuditByCategory('all')">
+                                <i class="fa-solid fa-layer-group"></i> All Events <span class="chip-count" id="chipCountAll">0</span>
+                            </button>
+                            <button class="audit-filter-chip" data-cat="report" onclick="filterAuditByCategory('report')">
+                                <i class="fa-solid fa-file-circle-check" style="color:#22c55e;"></i> Report Generations <span class="chip-count" id="chipCountReport">0</span>
+                            </button>
+                            <button class="audit-filter-chip" data-cat="cadence" onclick="filterAuditByCategory('cadence')">
+                                <i class="fa-solid fa-file-powerpoint" style="color:#f97316;"></i> Cadence PPT <span class="chip-count" id="chipCountCadence">0</span>
+                            </button>
+                            <button class="audit-filter-chip" data-cat="ingestion" onclick="filterAuditByCategory('ingestion')">
+                                <i class="fa-solid fa-database" style="color:#38bdf8;"></i> Ingestion & Sync <span class="chip-count" id="chipCountIngestion">0</span>
+                            </button>
+                            <button class="audit-filter-chip" data-cat="export" onclick="filterAuditByCategory('export')">
+                                <i class="fa-solid fa-cloud-arrow-down" style="color:#0ea5e9;"></i> Exports & Downloads <span class="chip-count" id="chipCountExport">0</span>
+                            </button>
+                        </div>
+
+                        <!-- ROW 2: SEARCH INPUT & ACTION CONTROLS -->
+                        <div class="audit-search-row">
+                            <div class="audit-search-wrapper">
+                                <i class="fa-solid fa-magnifying-glass audit-search-icon"></i>
+                                <input type="text" id="auditSearchInput" placeholder="Search audit logs by keyword, user, action, ID, or details..." autocomplete="off">
+                                <button id="btnClearAuditSearch" class="audit-clear-search-btn hidden" onclick="clearAuditSearch()" title="Clear Search">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <div class="audit-filter-actions">
+                                <!-- Kept for programmatical sync in app.js -->
+                                <select id="auditCategoryFilter" class="audit-select" onchange="filterAuditByCategory(this.value)" style="display:none;">
+                                    <option value="all">All Categories</option>
+                                    <option value="report">Report Generation</option>
+                                    <option value="cadence">Cadence PPT</option>
+                                    <option value="ingestion">Data Ingestion & Sync</option>
+                                    <option value="export">Exports & Downloads</option>
+                                </select>
+
+                                <div class="audit-dropdown-wrap">
+                                    <span class="audit-dropdown-label"><i class="fa-solid fa-arrow-down-short-wide text-blue"></i> Sort:</span>
+                                    <select id="auditSortDropdown" class="audit-select" onchange="changeAuditSort(this.value)">
+                                        <option value="timestamp-desc">Newest First</option>
+                                        <option value="timestamp-asc">Oldest First</option>
+                                        <option value="category-asc">Category (A-Z)</option>
+                                        <option value="action-asc">Action (A-Z)</option>
+                                        <option value="user-asc">User (A-Z)</option>
+                                        <option value="status-asc">Status (A-Z)</option>
+                                    </select>
+                                </div>
+
+                                <button class="btn btn-secondary btn-sm audit-reset-btn" id="btnResetAuditFilters" onclick="resetAllAuditFilters()" title="Reset All Filters">
+                                    <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                                </button>
+
+                                <span id="auditResultCountBadge" class="audit-results-pill">Showing 0 of 0 logs</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AUDIT LOGS DATA TABLE -->
+                    <div class="audit-table-card">
+                        <div class="audit-table-topbar">
+                            <div class="audit-table-title">
+                                <h4 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:10px;">
+                                    <i class="fa-solid fa-list-ul text-blue"></i> Activity & System Telemetry Log Stream
+                                </h4>
+                            </div>
+
+                            <div class="audit-table-status">
+                                <span class="audit-pulse-badge">
+                                    <span class="live-pulse-dot"></span> Live Recording Active
+                                </span>
+                                <button class="btn btn-secondary btn-sm" onclick="renderAuditLogsList()" title="Refresh Log Stream" style="font-weight:700;">
+                                    <i class="fa-solid fa-rotate me-1"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                                <thead>
+                                    <tr class="table-header">
+                                        <th onclick="sortAuditLogs('timestamp')" class="sortable-th" title="Click to sort by Timestamp" style="padding:14px 18px; min-width:170px;">
+                                            <span>Timestamp</span>
+                                            <i class="fa-solid fa-sort audit-sort-icon" id="sortIconTimestamp"></i>
+                                        </th>
+                                        <th onclick="sortAuditLogs('category')" class="sortable-th" title="Click to sort by Category" style="padding:14px 18px; min-width:160px;">
+                                            <span>Category</span>
+                                            <i class="fa-solid fa-sort audit-sort-icon" id="sortIconCategory"></i>
+                                        </th>
+                                        <th onclick="sortAuditLogs('action')" class="sortable-th" title="Click to sort by Action" style="padding:14px 18px; min-width:200px;">
+                                            <span>Action / Event</span>
+                                            <i class="fa-solid fa-sort audit-sort-icon" id="sortIconAction"></i>
+                                        </th>
+                                        <th onclick="sortAuditLogs('user')" class="sortable-th" title="Click to sort by User" style="padding:14px 18px; min-width:180px;">
+                                            <span>User / Source</span>
+                                            <i class="fa-solid fa-sort audit-sort-icon" id="sortIconUser"></i>
+                                        </th>
+                                        <th style="padding:14px 18px; min-width:300px;">Target Details</th>
+                                        <th onclick="sortAuditLogs('status')" class="sortable-th" title="Click to sort by Status" style="padding:14px 18px; text-align:right; min-width:110px;">
+                                            <span>Status</span>
+                                            <i class="fa-solid fa-sort audit-sort-icon" id="sortIconStatus"></i>
+                                        </th>
+                                        <th style="padding:14px 18px; text-align:center; width:90px;">Inspect</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditLogTableBody">
+                                    <!-- Rendered dynamically by renderAuditLogsList() in app.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 6: SYSTEM CONFIGURATION (VIZ 360) -->
+                <section class="settings-area app-view hidden" id="view-settings" style="flex:1; padding:20px; overflow-y:auto; background:var(--bg-main, #0b0f19); flex-direction:column; gap:20px;">
+                    <div class="settings-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color, #1e293b); padding-bottom:14px;">
+                        <div>
+                            <h2 style="font-size:20px; font-weight:800; margin:0; display:flex; align-items:center; gap:10px;">
+                                <i class="fa-solid fa-sliders" style="color:#a855f7;"></i> System Settings
+                            </h2>
+                            <p style="font-size:12px; color:var(--text-muted, #94a3b8); margin:4px 0 0 0;">Manage Viz 360 platform connections.</p>
+                        </div>
+                    </div>
+
+                    <!-- SUB-PANE 1: VIZ 360 API INTEGRATION -->
+                    <div class="settings-tab-pane active" id="pane-viz360-settings" style="display:flex; flex-direction:column; gap:18px;">
+                        <div class="card" style="border-radius:12px; padding:22px; max-width:720px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                <div>
+                                    <h3 style="font-size:16px; font-weight:800; margin:0 0 4px 0;"><i class="fa-solid fa-network-wired text-blue"></i> Viz 360 Platform REST API Connection</h3>
+                                    <span style="font-size:11.5px; color:var(--text-muted, #94a3b8);">Configure connection parameters to sync incident metrics from AltiSec Viz 360</span>
+                                </div>
+                                <span class="badge" style="background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); font-weight:700;">Active</span>
+                            </div>
+
+                            <div style="display:flex; flex-direction:column; gap:14px;">
+                                <div>
+                                    <label style="font-size:11.5px; font-weight:700; color:var(--text-main, #cbd5e1); display:block; margin-bottom:6px;">API Server Host Endpoint URL</label>
+                                    <input type="text" id="settingsViz360Url" class="styled-input" value="http://localhost:8000/api/viz360/sync" style="background:var(--bg-input, #0b1120); border:1px solid var(--border-color, #334155); color:#0ea5e9; font-weight:600; padding:8px 12px; border-radius:6px; width:100%;">
+                                </div>
+
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                                    <div>
+                                        <label style="font-size:11.5px; font-weight:700; color:var(--text-main, #cbd5e1); display:block; margin-bottom:6px;">Auth Secret / Bearer Token</label>
+                                        <input type="password" id="settingsViz360Token" class="styled-input" value="v360_live_sec_token_9921" style="background:var(--bg-input, #0b1120); border:1px solid var(--border-color, #334155); color:var(--text-main, #f8fafc); padding:8px 12px; border-radius:6px; width:100%;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11.5px; font-weight:700; color:var(--text-main, #cbd5e1); display:block; margin-bottom:6px;">Auto-Sync Frequency</label>
+                                        <select id="settingsViz360Freq" class="styled-select" style="background:var(--bg-input, #0b1120); border:1px solid var(--border-color, #334155); color:var(--text-main, #f8fafc); padding:8px 12px; border-radius:6px; width:100%;">
+                                            <option value="realtime" selected>Real-time (On Incident Trigger)</option>
+                                            <option value="15min">Every 15 Minutes</option>
+                                            <option value="1hour">Every 1 Hour</option>
+                                            <option value="daily">Daily Midnight Batch</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+                                    <button class="btn btn-secondary" id="btnTestViz360Settings" style="font-weight:700;">
+                                        <i class="fa-solid fa-plug"></i> Test Connection
+                                    </button>
+                                    <button class="btn btn-primary" id="btnSaveViz360Settings" style="background:linear-gradient(135deg, #2563eb, #1d4ed8); font-weight:700;">
+                                        <i class="fa-solid fa-floppy-disk"></i> Save & Sync Viz 360
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+
+
+                <!-- VIEW 9: TEMPLATE MANAGER (DEDICATED TEMPLATE HUB) -->
+                <section class="templates-area app-view hidden fx-view" id="view-templates">
+                    <header class="fx-head">
+                        <div>
+                            <h2><i class="fa-solid fa-layer-group" style="color:#eab308; margin-right:8px;"></i> Template Manager</h2>
+                            <p>Manage, add, search, edit, and organize SOC report and presentation deck templates independently from Report Setup.</p>
+                        </div>
+                        <div class="fx-actions">
+                            <button type="button" class="st-btn" onclick="openAddClientModal()" title="Add tenant and configure logo for report header"><i class="fa-solid fa-building-circle-check"></i> Add Tenant & Logo</button>
+                            <button type="button" class="st-btn" onclick="fetchAllTemplatesToLibrary()" title="Refresh and sync templates from storage and API"><i class="fa-solid fa-cloud-arrow-down"></i> Sync</button>
+                            <button type="button" class="st-btn" onclick="document.getElementById('templateImportInput').click()" title="Import templates from a JSON file"><i class="fa-solid fa-file-import"></i> Import JSON</button>
+                            <input type="file" id="templateImportInput" accept=".json,application/json" hidden onchange="importTemplatesFromFile(this)">
+                            <button type="button" class="st-btn" onclick="exportTemplatesJson()" title="Download all custom templates as JSON"><i class="fa-solid fa-file-export"></i> Export JSON</button>
+                            <button type="button" class="st-btn st-primary" id="btnHubCreateTemplate" onclick="openCreateTemplateModal()"><i class="fa-solid fa-plus"></i> Add Template</button>
+                        </div>
+                    </header>
+
+                    <div class="fx-toolbar" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                        <div class="cs-seg fx-filter" role="tablist" aria-label="Template category" id="templateHubFilters">
+                            <!-- Rendered by renderTemplatesHubView() -->
+                        </div>
+                        <div class="cs-search fx-search" style="flex:1; min-width:220px;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="search" id="mainTemplateSearchInput" oninput="renderTemplatesHubView(this.value)" placeholder="Search template name, tenant, format, description…" aria-label="Search templates">
+                        </div>
+                        <select id="tplHubClientSelect" class="styled-select" onchange="filterTemplatesHubClient(this.value)" style="height:32px; font-size:12px; padding:0 10px; max-width:200px;" title="Filter by assigned tenant">
+                            <option value="all">All Tenants</option>
+                        </select>
+                        <span class="cs-chip" id="unifiedTemplatesBadge">0 templates</span>
+                    </div>
+
+                    <div class="tpl-gallery" id="unifiedTemplatesGrid">
+                        <!-- Rendered by renderTemplatesHubView() -->
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- HISTORY ARCHIVE DRAWER -->
+    <div class="drawer-overlay hidden" id="drawerOverlay"></div>
+    <div class="drawer hidden" id="historyDrawer">
+        <div class="drawer-header">
+            <div class="drawer-title">
+                <i class="fa-solid fa-box-archive"></i>
+                <h3>Saved Reports Archive</h3>
+            </div>
+            <button class="btn btn-icon" id="btnCloseHistoryDrawer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-body" id="historyList">
+            <!-- Dynamic history list items -->
+        </div>
+        <div class="drawer-footer">
+            <button class="btn btn-primary btn-full" id="btnSaveCurrentReport">
+                <i class="fa-solid fa-floppy-disk"></i> Save Current Snapshot
+            </button>
+        </div>
+    </div>
+
+    <!-- VIZ 360 API CONFIGURATION MODAL -->
+    <div class="modal-backdrop hidden" id="viz360Modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plug"></i> Viz 360 REST API Connector</h3>
+                <button class="btn btn-icon" id="btnCloseViz360Modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Viz 360 API Endpoint Base URL</label>
+                    <input type="text" id="apiEndpointUrl" value="https://api.viz360.alticyber.com/v1/telemetry" class="styled-input">
+                </div>
+                <div class="form-group">
+                    <label>API Auth Token / Key</label>
+                    <input type="password" id="apiAuthToken" value="altisec_sec_token_9988223344" class="styled-input">
+                </div>
+                <div class="form-group">
+                    <label>Auto-Sync Interval</label>
+                    <select id="apiSyncInterval" class="styled-select">
+                        <option value="realtime">Real-time Live Webhook</option>
+                        <option value="15">Every 15 Minutes</option>
+                        <option value="60">Every 1 Hour</option>
+                    </select>
+                </div>
+                
+                <div id="apiTestResultBox" class="test-response-area hidden">
+                    <pre id="apiTestJson">Response: 200 OK</pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnTestViz360Conn">Test Connection</button>
+                <button class="btn btn-primary" id="btnFetchViz360Data">Fetch & Sync Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DYNAMIC "ADD SECTION" PICKER MODAL -->
+    <div class="modal-overlay hidden" id="addSectionModal" data-html2canvas-ignore="true" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(7,10,17,0.85); backdrop-filter:blur(10px); z-index:10010; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-card" style="width:100%; max-width:760px; max-height:88vh; background:var(--bg-card, #0f172a); border:1px solid rgba(56,189,248,0.4); border-radius:14px; box-shadow:0 25px 60px rgba(0,0,0,0.6); display:flex; flex-direction:column; overflow:hidden;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.08); background:rgba(15,23,42,0.95);">
+                <div>
+                    <h3 style="margin:0; font-size:18px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:10px;">
+                        <i class="fa-solid fa-layer-group" style="color:#38bdf8;"></i> Add Section to Report
+                    </h3>
+                    <p style="margin:4px 0 0 0; font-size:12.5px; color:#94a3b8;">Choose what kind of content block to insert after this section</p>
+                </div>
+                <button type="button" class="btn btn-icon" onclick="closeAddSectionModal()" style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding:22px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:14px;">
+                <!-- 1. Text Box -->
+                <div class="ucs-option-card" onclick="insertCustomSection('textbox')">
+                    <div class="ucs-option-icon" style="background:rgba(2,132,199,0.15); color:#38bdf8;">
+                        <i class="fa-solid fa-paragraph"></i>
+                    </div>
+                    <h4>Text Box</h4>
+                    <p>Editable heading, paragraphs, and narrative observations.</p>
+                </div>
+
+                <!-- 2. Callout / Highlight -->
+                <div class="ucs-option-card" onclick="insertCustomSection('callout')">
+                    <div class="ucs-option-icon" style="background:rgba(234,179,8,0.15); color:#facc15;">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+                    <h4>Executive Callout</h4>
+                    <p>Bordered alert box for key takeaways, cautions & actions.</p>
+                </div>
+
+                <!-- 3. Stat / KPI Cards -->
+                <div class="ucs-option-card" onclick="insertCustomSection('kpi_cards')">
+                    <div class="ucs-option-icon" style="background:rgba(16,185,129,0.15); color:#34d399;">
+                        <i class="fa-solid fa-chart-simple"></i>
+                    </div>
+                    <h4>Stat / KPI Cards</h4>
+                    <p>Row of 3 custom metric cards with bold numbers & trends.</p>
+                </div>
+
+                <!-- 4. Custom Table -->
+                <div class="ucs-option-card" onclick="insertCustomSection('table')">
+                    <div class="ucs-option-icon" style="background:rgba(168,85,247,0.15); color:#c084fc;">
+                        <i class="fa-solid fa-table"></i>
+                    </div>
+                    <h4>Data / Matrix Table</h4>
+                    <p>Corporate table with headers, status tags & "+ Row" button.</p>
+                </div>
+
+                <!-- 5. Clauses / Disclaimers -->
+                <div class="ucs-option-card" onclick="insertCustomSection('clause')">
+                    <div class="ucs-option-icon" style="background:rgba(239,68,68,0.15); color:#f87171;">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <h4>Clause / Disclaimers</h4>
+                    <p>Bulleted compliance clauses matching Confidentiality style.</p>
+                </div>
+
+                <!-- 6. Image / Diagram -->
+                <div class="ucs-option-card" onclick="insertCustomSection('image')">
+                    <div class="ucs-option-icon" style="background:rgba(6,182,212,0.15); color:#22d3ee;">
+                        <i class="fa-solid fa-image"></i>
+                    </div>
+                    <h4>Image / Diagram</h4>
+                    <p>Insert or upload network architecture, flowcharts & screenshots.</p>
+                </div>
+
+                <!-- 7. Divider Banner -->
+                <div class="ucs-option-card" onclick="insertCustomSection('divider')">
+                    <div class="ucs-option-icon" style="background:rgba(148,163,184,0.15); color:#cbd5e1;">
+                        <i class="fa-solid fa-heading"></i>
+                    </div>
+                    <h4>Section Divider</h4>
+                    <p>Full-width colored banner break with title badge.</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:14px 22px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:flex-end; background:rgba(15,23,42,0.95);">
+                <button type="button" class="btn btn-secondary" onclick="closeAddSectionModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOMER-WISE REPORTS & PPTS DIRECTORY MODAL -->
+    <div class="modal-overlay hidden" id="customerDirectoryModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(7,10,17,0.85); backdrop-filter:blur(10px); z-index:1000; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-card" style="width:100%; max-width:840px; max-height:85vh; background:var(--bg-card, #0f172a); border:1px solid var(--border-color, #1e293b); border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.4); display:flex; flex-direction:column; overflow:hidden;">
+            <div class="modal-header" style="padding:16px 20px; border-bottom:1px solid var(--border-color, #1e293b); display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel, #0b1120);">
+                <div>
+                    <h3 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-building-user" style="color:#a855f7;"></i> Tenant Reports & Presentations Directory
+                    </h3>
+                    <span style="font-size:11.5px; color:var(--text-muted, #94a3b8);">Browse accepted PDF reports and Cadence PowerPoint presentations grouped by Tenant</span>
+                </div>
+                <button class="btn btn-icon" id="btnCloseCustomerDirectoryModal" onclick="closeCustomerDirectoryModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-body" style="padding:20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:16px;">
+                <div id="customerDirectoryContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:16px;">
+                    <!-- Rendered dynamically by renderCustomerDirectoryCards() in app.js -->
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="padding:12px 20px; border-top:1px solid var(--border-color, #1e293b); display:flex; justify-content:flex-end; background:var(--bg-panel, #0b1120);">
+                <button class="btn btn-secondary" onclick="closeCustomerDirectoryModal()" style="font-weight:700;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DYNAMIC TEMPLATE EDITOR MODAL -->
+    <div class="modal-overlay hidden" id="templateEditorModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(7,10,17,0.88); backdrop-filter:blur(12px); z-index:10000; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-card" style="width:100%; max-width:760px; max-height:90vh; background:var(--bg-card, #0f172a); border:1px solid #38bdf8; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.6); display:flex; flex-direction:column; overflow:hidden;">
+            <div class="modal-header" style="padding:16px 20px; border-bottom:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, #0b1120, #0f172a);">
+                <div>
+                    <h3 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px; color:#f8fafc;">
+                        <i class="fa-solid fa-pen-to-square" style="color:#38bdf8;"></i> <span id="modalTemplateEditorTitle">Edit Template in Library</span>
+                    </h3>
+                    <span style="font-size:11.5px; color:#94a3b8;">Modify template configuration, target customer assignment, default forewords, and structure.</span>
+                </div>
+                <button class="btn btn-icon" onclick="closeTemplateEditorModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-body" style="padding:20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px;">
+                <input type="hidden" id="editTemplateIdHidden">
+
+                <!-- OPTIONAL FILE UPLOAD DROPZONE -->
+                <div class="form-group" id="modalTemplateUploadGroup">
+                    <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span><i class="fa-solid fa-file-arrow-up text-blue me-1"></i> Upload Template File (Optional)</span>
+                        <span style="font-size:10.5px; color:#94a3b8; font-weight:500;">Word (.docx), PowerPoint (.pptx), HTML, or JSON</span>
+                    </label>
+                    <div class="file-dropzone cs-dropzone" id="modalTemplateDropzone" onclick="document.getElementById('modalTemplateFileInput').click()" style="padding:14px; border:1px dashed rgba(56,189,248,0.35); border-radius:8px; text-align:center; cursor:pointer; background:rgba(15,23,42,0.6); transition:all 0.2s ease;">
+                        <input type="file" id="modalTemplateFileInput" accept=".pptx,.ppt,.docx,.doc,.html,.json,.pdf,*" hidden onchange="handleModalTemplateFileSelected(this)">
+                        <i class="fa-solid fa-cloud-arrow-up drop-icon" id="modalTemplateDropIcon" style="font-size:22px; color:#38bdf8; margin-bottom:4px; display:block;"></i>
+                        <strong id="modalTemplateDropTitle" style="font-size:12px; color:#f8fafc; display:block;">Drop a Word (.docx), PPT or template file here</strong>
+                        <span id="modalTemplateDropSub" style="font-size:11px; color:#94a3b8;">or click to browse files from your device</span>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <!-- TEMPLATE NAME -->
+                    <div class="form-group">
+                        <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">Template Display Name *</label>
+                        <input type="text" id="editTemplateNameInput" class="styled-input" placeholder="e.g. Executive SOC Weekly Template" style="width:100%;">
+                    </div>
+
+                    <!-- ASSIGNED CUSTOMER -->
+                    <div class="form-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label style="font-size:11.5px; font-weight:700; color:#cbd5e1;">Assigned Tenant / Customer</label>
+                            <button type="button" class="cs-link-btn" onclick="openAddClientModal()" style="font-size:10.5px; color:#38bdf8; font-weight:700; background:none; border:none; cursor:pointer;"><i class="fa-solid fa-plus"></i> New Tenant & Logo</button>
+                        </div>
+                        <select id="editTemplateCustomerSelect" class="styled-select" style="width:100%;" onchange="syncTemplateModalClientLogo(this.value)">
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- TENANT LOGO (FOR LEFT REPORT HEADER) -->
+                <div class="form-group" style="background:rgba(15,23,42,0.4); border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:10px 14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; margin:0;">
+                            <i class="fa-solid fa-image" style="color:#38bdf8; margin-right:4px;"></i> Tenant Logo (Placed in Top-Left of Report)
+                        </label>
+                        <span id="tplClientLogoStatus" style="font-size:10px; color:#94a3b8;">Placed in left ribbon</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div id="tplClientLogoPreviewBox" style="width:58px; height:34px; background:#002b49; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid rgba(255,255,255,0.15);">
+                            <i class="fa-solid fa-building" style="color:#64748b; font-size:16px;"></i>
+                        </div>
+                        <div style="flex:1; display:flex; align-items:center; gap:8px;">
+                            <button type="button" class="st-btn" onclick="document.getElementById('tplClientLogoFileInput').click()" style="padding:4px 10px; font-size:11px;">
+                                <i class="fa-solid fa-upload"></i> Upload Logo
+                            </button>
+                            <input type="file" id="tplClientLogoFileInput" accept="image/*" hidden onchange="handleTemplateClientLogoSelected(this)">
+                            <button type="button" class="cs-link-btn" id="btnRemoveTplClientLogo" onclick="removeTemplateClientLogo()" style="font-size:11px; color:#ef4444; display:none;">Remove Logo</button>
+                            <span style="font-size:10.5px; color:#94a3b8;">PNG/SVG/JPG with transparent background recommended.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. TEMPLATE CADENCE / FREQUENCY (WEEKLY, MONTHLY, CADENCE) -->
+                <div class="form-group" style="background:rgba(15,23,42,0.6); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:12px 14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label style="font-size:12px; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-calendar-check" style="color:#38bdf8;"></i> Select Report Cadence: Weekly, Monthly, or Cadence Deck *
+                        </label>
+                        <span id="tplCadenceActiveLabel" style="font-size:11px; color:#38bdf8; font-weight:700;">Weekly Report</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                        <button type="button" class="btn-cadence-toggle" id="btnCadenceWeekly" onclick="setTemplateEditorCadence('weekly')" style="padding:10px 8px; border-radius:8px; border:2px solid #38bdf8; background:rgba(14,165,233,0.22); color:#f8fafc; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s ease;">
+                            <i class="fa-solid fa-calendar-week" style="color:#38bdf8; font-size:14px;"></i> Weekly Report
+                        </button>
+                        <button type="button" class="btn-cadence-toggle" id="btnCadenceMonthly" onclick="setTemplateEditorCadence('monthly')" style="padding:10px 8px; border-radius:8px; border:1px solid #334155; background:rgba(15,23,42,0.5); color:#94a3b8; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s ease;">
+                            <i class="fa-solid fa-calendar-days" style="color:#a855f7; font-size:14px;"></i> Monthly Report
+                        </button>
+                        <button type="button" class="btn-cadence-toggle" id="btnCadencePresentation" onclick="setTemplateEditorCadence('cadence')" style="padding:10px 8px; border-radius:8px; border:1px solid #334155; background:rgba(15,23,42,0.5); color:#94a3b8; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s ease;">
+                            <i class="fa-solid fa-file-powerpoint" style="color:#f97316; font-size:14px;"></i> Cadence Deck
+                        </button>
+                    </div>
+                    <!-- Preserved select for backward-compatibility -->
+                    <select id="editTemplateFormatSelect" style="display:none;">
+                        <option value="weekly" selected>Weekly SOC MDR Report</option>
+                        <option value="monthly">Monthly Executive Deck</option>
+                        <option value="cadence">Cadence Deck (PPTX)</option>
+                        <option value="docx">Word Document (.docx)</option>
+                        <option value="pptx">PowerPoint Presentation (.pptx)</option>
+                        <option value="custom">Custom Template</option>
+                    </select>
+                </div>
+
+                <div style="display:none; grid-template-columns:1fr 1fr; gap:12px;" id="modalTemplateLayoutAndTitleRow">
+                    <!-- 2. BASE TEMPLATE LAYOUT (WHICH TEMPLATE IT IS) -->
+                    <div class="form-group">
+                        <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span><i class="fa-solid fa-layer-group text-blue" style="margin-right:4px;"></i> Select Which Template Layout It Is *</span>
+                            <span id="tplBasePagesBadge" style="font-size:10.5px; color:#38bdf8; font-weight:700;">16 Pages</span>
+                        </label>
+                        <select id="editTemplateBaseSelect" class="styled-select" style="width:100%; font-size:12px;" onchange="handleTemplateBaseChange(this.value)">
+                            <!-- Populated dynamically based on Weekly or Monthly -->
+                        </select>
+                    </div>
+
+                    <!-- REPORT TITLE PREFIX -->
+                    <div class="form-group">
+                        <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">Default Report Title</label>
+                        <input type="text" id="editTemplateReportTitleInput" class="styled-input" placeholder="e.g. SOC MDR Weekly Report" style="width:100%;">
+                    </div>
+                </div>
+
+                <!-- EXECUTIVE FOREWORD / SCOPE TEXT -->
+                <div class="form-group">
+                    <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">
+                        Executive Foreword & Scope Text
+                    </label>
+                    <textarea id="editTemplateForewordInput" class="styled-textarea" rows="4" style="width:100%; font-size:12px; line-height:1.5; resize:vertical;" placeholder="Enter custom foreword or executive summary text for this template..."></textarea>
+                </div>
+
+                <!-- HIGHLIGHTS / INCIDENT REPORTING TEXT -->
+                <div class="form-group">
+                    <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">
+                        Objectives & Incident Reporting Focus
+                    </label>
+                    <textarea id="editTemplateObjectivesInput" class="styled-textarea" rows="3" style="width:100%; font-size:12px; line-height:1.5; resize:vertical;" placeholder="Enter specific objectives, goals, or reporting instructions..."></textarea>
+                </div>
+
+                <!-- ADVANCED CUSTOM CONTENT / HTML (ACCORDION) -->
+                <details id="editTemplateAdvancedDetails" style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px;">
+                    <summary style="font-size:11.5px; font-weight:700; color:#38bdf8; cursor:pointer; user-select:none;">
+                        <i class="fa-solid fa-code"></i> Advanced Custom Template Body / HTML Content
+                    </summary>
+                    <div style="margin-top:10px;">
+                        <textarea id="editTemplateCustomHtmlInput" class="styled-textarea" rows="5" style="width:100%; font-family:Consolas, monospace; font-size:11px; line-height:1.4; color:#f8fafc; resize:vertical;" placeholder="Paste or edit raw HTML/template content..."></textarea>
+                        <small style="color:#64748b; font-size:10px;">Placeholders supported: <code>${CLIENT_NAME}</code>, <code>${REPORT_DATE}</code>, <code>${REPORTING_PERIOD}</code></small>
+                    </div>
+                </details>
+            </div>
+            
+            <div class="modal-footer" style="padding:14px 20px; border-top:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center; background:#0b1120;">
+                <button type="button" class="btn btn-secondary" onclick="closeTemplateEditorModal()" style="font-weight:700;">Cancel</button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-secondary" id="btnModalCloneTemplate" onclick="cloneCurrentEditedTemplate()" style="background:#1e293b; border:1px solid #38bdf8; color:#38bdf8; font-weight:700; padding:8px 14px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-copy"></i> Clone as New Template
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnModalSaveTemplate" onclick="saveTemplateFromModal()" style="background:linear-gradient(135deg, #0ea5e9, #0284c7); border:none; font-weight:800; padding:8px 16px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-floppy-disk"></i> <span id="btnModalSaveTemplateText">Save Template Changes</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DYNAMIC DELETE CONFIRMATION MODAL -->
+    <div class="modal-overlay hidden" id="confirmDeleteTemplateModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(7,10,17,0.85); backdrop-filter:blur(10px); z-index:10005; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-card" style="width:100%; max-width:440px; background:var(--bg-card, #0f172a); border:1px solid rgba(239,68,68,0.4); border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.6); display:flex; flex-direction:column; overflow:hidden;">
+            <div class="modal-header" style="padding:16px 20px; border-bottom:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, #1e1115, #0f172a);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); display:flex; align-items:center; justify-content:center;">
+                        <i class="fa-solid fa-trash" style="color:#ef4444; font-size:14px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:15px; font-weight:800; color:#f8fafc;">Confirm Delete Template</h3>
+                        <span style="font-size:11px; color:#94a3b8;">This action will remove the template from your library.</span>
+                    </div>
+                </div>
+                <button class="btn btn-icon" onclick="closeConfirmDeleteModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body" style="padding:20px; color:#cbd5e1; font-size:12.5px; line-height:1.5;">
+                <p style="margin:0 0 10px 0;">Are you sure you want to delete template <strong style="color:#f8fafc; font-weight:800;" id="deleteConfirmTemplateName"></strong>?</p>
+                <p style="margin:0; font-size:11px; color:#94a3b8;">It will be removed from your Customer Template Library and report studio dropdowns.</p>
+            </div>
+
+            <div class="modal-footer" style="padding:12px 20px; border-top:1px solid #1e293b; display:flex; justify-content:flex-end; gap:8px; background:#0b1120;">
+                <button type="button" class="btn btn-secondary" onclick="closeConfirmDeleteModal()" style="font-weight:700; padding:6px 14px; font-size:12px;">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmDeleteTemplateOk" onclick="executeTemplateDeletion()" style="background:#dc2626; color:#ffffff; font-weight:800; border:none; padding:6px 16px; border-radius:6px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-check"></i> OK / Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIT EVENT TELEMETRY INSPECTOR MODAL (HIGHLY INTERACTIVE & HIGH CONTRAST) -->
+    <div class="modal-overlay hidden" id="auditDetailModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(7,10,17,0.85); backdrop-filter:blur(12px); z-index:10000; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-card audit-inspector-modal">
+            <!-- MODAL HEADER -->
+            <div class="modal-header audit-inspector-header">
+                <div class="audit-modal-header-left">
+                    <div class="audit-modal-icon-badge" id="auditModalIconWrap">
+                        <i class="fa-solid fa-satellite-dish" id="auditModalIcon"></i>
+                    </div>
+                    <div>
+                        <div class="audit-modal-title-row">
+                            <h3 class="audit-modal-title">Audit Telemetry Inspector</h3>
+                            <button id="auditModalIdBadge" class="audit-id-badge-btn" onclick="copyModalField('id')" title="Click to copy Event ID">
+                                <span id="auditModalIdText">LOG-1001</span>
+                                <i class="fa-solid fa-copy ms-1 text-dim"></i>
+                            </button>
+                        </div>
+                        <div class="audit-modal-subtitle-row">
+                            <span id="auditModalSubtitle"><i class="fa-solid fa-shield-halved text-green me-1"></i> Verified Immutable Event Record</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="audit-modal-header-right">
+                    <!-- EVENT NAVIGATION STEPPERS -->
+                    <div class="audit-stepper-wrap" title="Browse through audit events">
+                        <button class="audit-stepper-btn" id="auditPrevBtn" onclick="stepAuditLogDetail(-1)" title="Previous Event (←)">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <span class="audit-stepper-counter" id="auditModalStepperCounter">1 / 1</span>
+                        <button class="audit-stepper-btn" id="auditNextBtn" onclick="stepAuditLogDetail(1)" title="Next Event (→)">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <button class="btn btn-icon audit-modal-close-btn" onclick="closeAuditLogDetailModal()" title="Close Inspector (Esc)">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE TABS BAR -->
+            <div class="audit-modal-tabs">
+                <button class="audit-tab-btn active" data-audit-tab="overview" onclick="switchAuditModalTab('overview')">
+                    <i class="fa-solid fa-chart-pie me-1"></i> Overview
+                </button>
+                <button class="audit-tab-btn" data-audit-tab="flow" onclick="switchAuditModalTab('flow')">
+                    <i class="fa-solid fa-diagram-project me-1"></i> Event Flow Trace
+                </button>
+                <button class="audit-tab-btn" data-audit-tab="json" onclick="switchAuditModalTab('json')">
+                    <i class="fa-solid fa-code me-1"></i> Raw JSON Payload
+                </button>
+                <button class="audit-tab-btn" data-audit-tab="security" onclick="switchAuditModalTab('security')">
+                    <i class="fa-solid fa-shield-halved me-1"></i> Cryptographic Proof
+                </button>
+            </div>
+
+            <!-- MODAL BODY -->
+            <div class="modal-body audit-inspector-body">
+                <!-- TAB 1: OVERVIEW -->
+                <div class="audit-tab-pane active" id="auditPaneOverview">
+                    <!-- TOP 4 KPI CARDS -->
+                    <div class="audit-modal-kpi-grid">
+                        <div class="audit-modal-metric-card metric-status">
+                            <div class="metric-head">
+                                <span class="metric-label">Event Status</span>
+                                <span class="metric-dot" id="auditMetricStatusDot"></span>
+                            </div>
+                            <div id="auditModalStatus" class="metric-val status-val">
+                                <i class="fa-solid fa-circle-check me-1"></i> SUCCESS
+                            </div>
+                        </div>
+
+                        <div class="audit-modal-metric-card metric-category">
+                            <div class="metric-head">
+                                <span class="metric-label">Category</span>
+                                <i class="fa-solid fa-tag text-dim"></i>
+                            </div>
+                            <div id="auditModalCategory" class="metric-val cat-val">
+                                Report Generation
+                            </div>
+                        </div>
+
+                        <div class="audit-modal-metric-card metric-latency">
+                            <div class="metric-head">
+                                <span class="metric-label">Execution Latency</span>
+                                <i class="fa-solid fa-gauge-high text-blue"></i>
+                            </div>
+                            <div id="auditModalLatency" class="metric-val latency-val">
+                                <i class="fa-solid fa-stopwatch me-1"></i> 118 ms
+                            </div>
+                        </div>
+
+                        <div class="audit-modal-metric-card metric-integrity">
+                            <div class="metric-head">
+                                <span class="metric-label">Integrity Ledger</span>
+                                <i class="fa-solid fa-lock text-green"></i>
+                            </div>
+                            <div id="auditModalChecksum" class="metric-val integrity-val">
+                                <i class="fa-solid fa-shield-check me-1"></i> SHA-256 Valid
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTION EXECUTED HERO CARD -->
+                    <div class="audit-modal-action-card">
+                        <div class="action-card-header">
+                            <div class="action-title-wrap">
+                                <span class="action-tag"><i class="fa-solid fa-bolt text-yellow me-1"></i> ACTION EXECUTED</span>
+                                <h4 id="auditModalAction" class="action-title">Accepted Report PDF</h4>
+                            </div>
+                            <span class="action-status-pill" id="auditModalActionPill"><i class="fa-solid fa-circle-check text-green me-1"></i> Verified Execution</span>
+                        </div>
+                        <div class="action-details-box">
+                            <div class="details-label"><i class="fa-solid fa-align-left text-dim me-1"></i> Target / Payload Details:</div>
+                            <div id="auditModalDetails" class="details-content">
+                                Generated & Accepted Weekly Report (08TH TO 14TH JUNE 2026)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2x2 INTERACTIVE METADATA CARDS -->
+                    <div class="audit-modal-meta-grid">
+                        <div class="audit-interactive-card" onclick="copyModalField('user')" title="Click to copy Actor">
+                            <div class="aic-head">
+                                <span class="aic-label"><i class="fa-solid fa-user-shield text-blue me-1"></i> Actor / Trigger</span>
+                                <button class="aic-copy-btn" title="Copy"><i class="fa-solid fa-copy"></i></button>
+                            </div>
+                            <div id="auditModalUser" class="aic-val">Saachi Joshi (Governance Lead)</div>
+                            <span class="aic-sub">Authenticated System Identity</span>
+                        </div>
+
+                        <div class="audit-interactive-card" onclick="copyModalField('timestamp')" title="Click to copy Timestamp">
+                            <div class="aic-head">
+                                <span class="aic-label"><i class="fa-regular fa-clock text-orange me-1"></i> Event Timestamp</span>
+                                <button class="aic-copy-btn" title="Copy"><i class="fa-solid fa-copy"></i></button>
+                            </div>
+                            <div id="auditModalTimestamp" class="aic-val font-mono">2026-08-02 11:20:15</div>
+                            <span class="aic-sub">UTC+05:30 High-Precision Clock</span>
+                        </div>
+
+                        <div class="audit-interactive-card" onclick="copyModalField('ip')" title="Click to copy IP">
+                            <div class="aic-head">
+                                <span class="aic-label"><i class="fa-solid fa-network-wired text-purple me-1"></i> Origin Source IP / Host</span>
+                                <button class="aic-copy-btn" title="Copy"><i class="fa-solid fa-copy"></i></button>
+                            </div>
+                            <div id="auditModalIp" class="aic-val font-mono">192.168.1.104 (VPN Tunnel)</div>
+                            <span class="aic-sub">Internal Mesh Network Node</span>
+                        </div>
+
+                        <div class="audit-interactive-card" onclick="copyModalField('node')" title="Click to copy Cluster Node">
+                            <div class="aic-head">
+                                <span class="aic-label"><i class="fa-solid fa-server text-green me-1"></i> Cluster Processing Node</span>
+                                <button class="aic-copy-btn" title="Copy"><i class="fa-solid fa-copy"></i></button>
+                            </div>
+                            <div id="auditModalNode" class="aic-val font-mono">telemetry-worker-node-02</div>
+                            <span class="aic-sub"><span class="node-live-dot"></span> Node Active & Healthy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: EVENT FLOW TRACE -->
+                <div class="audit-tab-pane" id="auditPaneFlow" style="display:none;">
+                    <div class="audit-trace-container">
+                        <div class="audit-trace-step">
+                            <div class="trace-icon-wrap icon-user"><i class="fa-solid fa-user-circle"></i></div>
+                            <div class="trace-content">
+                                <div class="trace-step-title">1. Origin & Authorization</div>
+                                <div class="trace-step-desc" id="traceUserDesc">Triggered by Saachi Joshi from IP 192.168.1.104</div>
+                                <span class="trace-pill pill-success"><i class="fa-solid fa-check me-1"></i> RBAC Token Valid</span>
+                            </div>
+                        </div>
+                        <div class="trace-line"></div>
+                        <div class="audit-trace-step">
+                            <div class="trace-icon-wrap icon-node"><i class="fa-solid fa-microchip"></i></div>
+                            <div class="trace-content">
+                                <div class="trace-step-title">2. Gateway Dispatch & Processing</div>
+                                <div class="trace-step-desc" id="traceNodeDesc">Assigned to telemetry-worker-node-02 (TLS 1.3 encrypted)</div>
+                                <span class="trace-pill pill-info"><i class="fa-solid fa-bolt me-1"></i> Zero-Loss Queue</span>
+                            </div>
+                        </div>
+                        <div class="trace-line"></div>
+                        <div class="audit-trace-step">
+                            <div class="trace-icon-wrap icon-action"><i class="fa-solid fa-gears"></i></div>
+                            <div class="trace-content">
+                                <div class="trace-step-title">3. Core Execution</div>
+                                <div class="trace-step-desc" id="traceActionDesc">Executed: Accepted Report PDF</div>
+                                <span class="trace-pill pill-latency" id="traceLatencyPill"><i class="fa-solid fa-stopwatch me-1"></i> 118 ms latency</span>
+                            </div>
+                        </div>
+                        <div class="trace-line"></div>
+                        <div class="audit-trace-step">
+                            <div class="trace-icon-wrap icon-ledger"><i class="fa-solid fa-shield-check"></i></div>
+                            <div class="trace-content">
+                                <div class="trace-step-title">4. Cryptographic Ledger Commit</div>
+                                <div class="trace-step-desc" id="traceLedgerDesc">SHA-256 block hash committed to immutable audit trail</div>
+                                <span class="trace-pill pill-success"><i class="fa-solid fa-lock me-1"></i> Tamper-Proof Sealed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: RAW JSON PAYLOAD -->
+                <div class="audit-tab-pane" id="auditPaneJson" style="display:none;">
+                    <div class="audit-json-toolbar">
+                        <div class="audit-json-toolbar-left">
+                            <span class="json-tag"><i class="fa-solid fa-code text-blue me-1"></i> JSON PAYLOAD STREAM</span>
+                            <span class="json-size-tag" id="auditJsonSizeTag">1.2 KB</span>
+                        </div>
+                        <div class="audit-json-toolbar-right">
+                            <button class="btn btn-secondary btn-xs" id="btnModalCopyJsonQuick" onclick="copyAuditLogJson()" style="font-weight:700;">
+                                <i class="fa-solid fa-copy me-1"></i> Copy JSON
+                            </button>
+                            <button class="btn btn-secondary btn-xs" onclick="downloadAuditLogSingleJson()" style="font-weight:700;">
+                                <i class="fa-solid fa-download me-1"></i> Download .json
+                            </button>
+                        </div>
+                    </div>
+                    <div class="audit-json-viewer-container">
+                        <pre id="auditModalJsonPre" class="audit-modal-json-pre"><code>{}</code></pre>
+                    </div>
+                </div>
+
+                <!-- TAB 4: CRYPTOGRAPHIC PROOF -->
+                <div class="audit-tab-pane" id="auditPaneSecurity" style="display:none;">
+                    <div class="audit-security-card">
+                        <div class="security-card-header">
+                            <div class="security-badge-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div>
+                                <h4 style="margin:0; font-size:16px; font-weight:800; color:var(--text-main);">Enterprise Immutability Verification</h4>
+                                <p style="margin:4px 0 0 0; font-size:12.5px; color:var(--text-muted);">Cryptographic proof verifying that this telemetry record has not been altered since generation.</p>
+                            </div>
+                        </div>
+
+                        <div class="security-hash-box">
+                            <div class="shb-label">
+                                <span><i class="fa-solid fa-fingerprint text-blue me-1"></i> SHA-256 Digest Signature:</span>
+                                <button class="btn btn-secondary btn-xs" onclick="copyModalField('hash')" style="font-weight:700;"><i class="fa-solid fa-copy me-1"></i> Copy Digest</button>
+                            </div>
+                            <div class="shb-hash" id="auditModalFullHash">7c98b31d04e578a1290f6b328a9b91024e6cf1e4a7791b5042a3ef71891fa21</div>
+                        </div>
+
+                        <div class="security-meta-row">
+                            <div class="sec-meta-item">
+                                <span class="sec-lbl">Cipher / Digest Algorithm</span>
+                                <span class="sec-val">SHA-256 / HMAC-SHA256</span>
+                            </div>
+                            <div class="sec-meta-item">
+                                <span class="sec-lbl">Transport Security</span>
+                                <span class="sec-val">TLS 1.3 / AES-256-GCM</span>
+                            </div>
+                            <div class="sec-meta-item">
+                                <span class="sec-lbl">Ledger State</span>
+                                <span class="sec-val text-green"><i class="fa-solid fa-circle-check me-1"></i> Sealed & Verifiable</span>
+                            </div>
+                        </div>
+
+                        <div class="security-action-row">
+                            <button class="btn btn-primary" id="btnVerifyIntegrityProof" onclick="runIntegrityVerificationAnimation()" style="font-weight:700; padding:10px 20px;">
+                                <i class="fa-solid fa-shield-check me-1"></i> Run Live Immutability Check
+                            </button>
+                            <span id="integrityCheckResult" class="integrity-result-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL FOOTER -->
+            <div class="modal-footer audit-inspector-footer">
+                <div class="audit-footer-actions-left">
+                    <button class="btn btn-secondary" onclick="copyAuditLogJson()" style="font-weight:700; height:38px;">
+                        <i class="fa-solid fa-copy me-1"></i> Copy Payload
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadAuditLogSingleJson()" style="font-weight:700; height:38px;">
+                        <i class="fa-solid fa-file-arrow-down me-1"></i> Download JSON
+                    </button>
+                </div>
+
+                <div class="audit-footer-actions-right">
+                    <span class="audit-keyboard-hints">
+                        <kbd>Esc</kbd> Close &nbsp;•&nbsp; <kbd>←</kbd> <kbd>→</kbd> Navigate
+                    </span>
+                    <button class="btn btn-primary" onclick="closeAuditLogDetailModal()" style="font-weight:800; min-width:90px; height:38px;">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING MICROSOFT WORD-STYLE COMPACT MINI FORMATTING TOOLBAR -->
+    <div id="reportFloatingFormatToolbar" class="report-floating-toolbar hidden" onmousedown="event.preventDefault()">
+        <!-- ROW 1: FONT SIZE, GROW, SHRINK -->
+        <div class="rf-toolbar-row">
+            <select id="rfFontSize" class="rf-select rf-size-select" title="Font Size">
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12" selected>12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="16">16</option>
+                <option value="18">18</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+                <option value="28">28</option>
+                <option value="32">32</option>
+            </select>
+            <div class="rf-btn-group">
+                <button type="button" class="rf-btn" id="rfGrowFont" title="Increase Font Size (Grow Font)">
+                    <span style="font-size:12px; font-weight:800;">A</span><i class="fa-solid fa-chevron-up" style="font-size:7px; vertical-align:super; margin-left:1px;"></i>
+                </button>
+                <button type="button" class="rf-btn" id="rfShrinkFont" title="Decrease Font Size (Shrink Font)">
+                    <span style="font-size:10px; font-weight:800;">A</span><i class="fa-solid fa-chevron-down" style="font-size:7px; vertical-align:sub; margin-left:1px;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ROW 2: BOLD, ITALIC, UNDERLINE, TEXT COLOR -->
+        <div class="rf-toolbar-row">
+            <div class="rf-btn-group">
+                <button type="button" class="rf-btn" id="rfBold" title="Bold (Ctrl+B)"><b>B</b></button>
+                <button type="button" class="rf-btn" id="rfItalic" title="Italic (Ctrl+I)"><i>I</i></button>
+                <button type="button" class="rf-btn" id="rfUnderline" title="Underline (Ctrl+U)"><u>U</u></button>
+            </div>
+            
+            <div class="rf-color-wrapper" title="Font Text Color">
+                <button type="button" class="rf-btn rf-color-btn" id="rfTextColorBtn">
+                    <span style="font-size:12px; font-weight:900;">A</span>
+                    <div class="rf-color-bar" id="rfTextBar" style="background:#dc2626;"></div>
+                </button>
+                <input type="color" id="rfTextColor" value="#dc2626" class="rf-hidden-color-input">
+            </div>
+        </div>
+    </div>
+
+    <!-- INTERACTIVE RESIZE & REPOSITION OVERLAY FOR SELECTED IMAGE -->
+    <div id="reportImageSelectOverlay" class="report-image-overlay hidden" data-html2canvas-ignore="true" title="Click and drag with mouse to reposition image">
+        <div class="img-resize-handle handle-nw" data-handle="nw" title="Resize NW"></div>
+        <div class="img-resize-handle handle-n" data-handle="n" title="Resize N"></div>
+        <div class="img-resize-handle handle-ne" data-handle="ne" title="Resize NE"></div>
+        <div class="img-resize-handle handle-e" data-handle="e" title="Resize E"></div>
+        <div class="img-resize-handle handle-se" data-handle="se" title="Resize SE"></div>
+        <div class="img-resize-handle handle-s" data-handle="s" title="Resize S"></div>
+        <div class="img-resize-handle handle-sw" data-handle="sw" title="Resize SW"></div>
+        <div class="img-resize-handle handle-w" data-handle="w" title="Resize W"></div>
+        <div class="img-dimension-badge" id="imgDimensionBadge">0 × 0 px</div>
+        <div class="img-move-hint" id="imgMoveHint"><i class="fa-solid fa-arrows-up-down-left-right"></i> Move</div>
+    </div>
+
+    <!-- REPORT STUDIO FLOATING IMAGE ACTION TOOLBAR -->
+    <div id="reportImageFloatingToolbar" class="report-image-toolbar hidden" data-html2canvas-ignore="true" onmousedown="event.stopPropagation()">
+        <!-- TOOLBAR DRAG GRIP HANDLE -->
+        <div class="rit-drag-handle" id="ritDragHandle" title="Click and drag with mouse to reposition toolbar">
+            <i class="fa-solid fa-grip-vertical"></i>
+        </div>
+
+        <!-- 1. STYLE GROUP -->
+        <div class="rit-popover-anchor">
+            <button type="button" class="rit-btn" id="ritStyleTriggerBtn" onclick="toggleImageStylePopover(event)" title="Corner rounding and drop shadow styling">
+                <i class="fa-solid fa-palette"></i>
+                <span>Style</span>
+                <i class="fa-solid fa-chevron-down rit-caret"></i>
+            </button>
+            <div id="ritStylePopover" class="rit-popover hidden" onmousedown="event.stopPropagation()">
+                <div class="rit-popover-title">
+                    <span><i class="fa-solid fa-palette"></i> Image Styling</span>
+                    <button type="button" class="rit-popover-close" onclick="closeImagePopovers()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <!-- CORNER ROUNDING -->
+                <div class="rit-popover-section">
+                    <div class="rit-popover-subtitle">Corner Rounding</div>
+                    <div class="rit-style-grid">
+                        <button type="button" class="rit-style-btn" id="ritRadius0" onclick="setReportImageRadiusPreset('0px')">
+                            <i class="fa-regular fa-square"></i>
+                            <span>Square</span>
+                        </button>
+                        <button type="button" class="rit-style-btn" id="ritRadius8" onclick="setReportImageRadiusPreset('8px')">
+                            <i class="fa-solid fa-square" style="border-radius:4px; font-size:11px;"></i>
+                            <span>Rounded</span>
+                        </button>
+                        <button type="button" class="rit-style-btn" id="ritRadius16" onclick="setReportImageRadiusPreset('16px')">
+                            <i class="fa-solid fa-square" style="border-radius:8px; font-size:11px;"></i>
+                            <span>Smooth</span>
+                        </button>
+                        <button type="button" class="rit-style-btn" id="ritRadiusPill" onclick="setReportImageRadiusPreset('9999px')">
+                            <i class="fa-regular fa-circle"></i>
+                            <span>Pill</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- DROP SHADOW -->
+                <div class="rit-popover-section">
+                    <div class="rit-popover-subtitle">Drop Shadow</div>
+                    <div class="rit-style-grid rit-shadow-grid">
+                        <button type="button" class="rit-style-btn" id="ritShadowNone" onclick="setReportImageShadowPreset('none')">
+                            <i class="fa-solid fa-ban"></i>
+                            <span>None</span>
+                        </button>
+                        <button type="button" class="rit-style-btn" id="ritShadowSoft" onclick="setReportImageShadowPreset('0 4px 12px rgba(0, 0, 0, 0.15)')">
+                            <i class="fa-solid fa-cloud"></i>
+                            <span>Soft</span>
+                        </button>
+                        <button type="button" class="rit-style-btn" id="ritShadowDeep" onclick="setReportImageShadowPreset('0 12px 30px rgba(0, 0, 0, 0.35)')">
+                            <i class="fa-solid fa-cloud-moon"></i>
+                            <span>Deep</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <span class="rit-divider"></span>
+
+        <!-- 2. PRIMARY ACTION: REPLACE (OFFERING UPLOAD & LIBRARY) -->
+        <div class="rit-popover-anchor">
+            <button type="button" class="rit-btn rit-primary" id="ritReplaceTriggerBtn" onclick="toggleReplaceDropdown(event)" title="Replace image with a new upload or library asset">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Replace</span>
+                <i class="fa-solid fa-chevron-down rit-caret"></i>
+            </button>
+            <div id="ritReplaceDropdown" class="rit-popover rit-dropdown-menu hidden" onmousedown="event.stopPropagation()">
+                <button type="button" class="rit-menu-item" onclick="triggerReportImageReplace(); closeImagePopovers();" title="Upload a replacement image from your computer">
+                    <i class="fa-solid fa-cloud-arrow-up" style="color:#38bdf8; font-size:13px;"></i>
+                    <div class="rit-menu-text">
+                        <div class="rit-menu-title">Upload Image</div>
+                        <div class="rit-menu-subtitle">From computer or device</div>
+                    </div>
+                </button>
+                <button type="button" class="rit-menu-item" onclick="openImageLibrary('replace'); closeImagePopovers();" title="Browse and choose from the AltiSec Image Library">
+                    <i class="fa-regular fa-images" style="color:#38bdf8; font-size:13px;"></i>
+                    <div class="rit-menu-text">
+                        <div class="rit-menu-title">Choose from Library</div>
+                        <div class="rit-menu-subtitle">Browse logos, covers & icons</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <span class="rit-divider"></span>
+
+        <!-- 3. DESTRUCTIVE ACTION: DELETE IMAGE -->
+        <button type="button" class="rit-btn rit-danger" onclick="removeSelectedReportImage()" title="Delete image from report (Del / Backspace)">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Delete</span>
+        </button>
+
+        <!-- 4. OVERFLOW MENU (FULLSCREEN, DOWNLOAD, RESET SIZE & POSITION) -->
+        <div class="rit-popover-anchor">
+            <button type="button" class="rit-btn rit-btn-icon" id="ritMoreTriggerBtn" onclick="toggleImageMorePopover(event)" title="More options (Fullscreen, Download, Reset)">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+            <div id="ritMorePopover" class="rit-popover rit-more-popover hidden" onmousedown="event.stopPropagation()">
+                <button type="button" class="rit-menu-item" onclick="previewCurrentSelectedImage()">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    <span>View Fullscreen</span>
+                </button>
+                <button type="button" class="rit-menu-item" onclick="downloadCurrentSelectedImage()">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Download Image</span>
+                </button>
+                <div class="rit-menu-divider"></div>
+                <button type="button" class="rit-menu-item" onclick="resetReportImageToOriginal()">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Reset Size & Position</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. CLOSE / DESELECT -->
+        <button type="button" class="rit-btn rit-close rit-btn-icon" onclick="deselectReportImage()" title="Close toolbar (Esc)">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- IMAGE LIBRARY & ASSET MANAGER MODAL (WITH UPLOAD & LIBRARY TABS) -->
+    <div class="modal-overlay hidden" id="imageLibraryModal" data-html2canvas-ignore="true" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(7,10,17,0.88); backdrop-filter:blur(12px); z-index:10005; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-card" style="width:100%; max-width:960px; max-height:88vh; background:var(--bg-card, #0f172a); border:1px solid rgba(56,189,248,0.4); border-radius:14px; box-shadow:0 25px 60px rgba(0,0,0,0.6); display:flex; flex-direction:column; overflow:hidden;">
+            <!-- MODAL HEADER -->
+            <div class="modal-header" style="padding:14px 22px; border-bottom:1px solid var(--border-color, #1e293b); display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel, #0b1120);">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:36px; height:36px; border-radius:10px; background:rgba(14,165,233,0.15); border:1px solid rgba(14,165,233,0.3); display:flex; align-items:center; justify-content:center; color:#38bdf8; font-size:16px;">
+                        <i class="fa-solid fa-arrow-right-arrow-left" id="imgModalHeaderIcon"></i>
+                    </div>
+                    <div>
+                        <h3 id="imgModalHeaderTitle" style="margin:0; font-size:16px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px;">
+                            Replace Image
+                            <span id="imgLibModeBadge" style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px; background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">Replace Mode</span>
+                        </h3>
+                        <span id="imgModalHeaderSubtitle" style="font-size:11.5px; color:#94a3b8;">Choose an image from the library or upload a replacement file from your device</span>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button class="btn btn-icon" onclick="closeImageLibrary()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- PROMINENT NAVIGATION TABS: UPLOAD vs IMAGE LIBRARY -->
+            <div class="img-modal-tabs-bar">
+                <div class="img-modal-tab-group">
+                    <button type="button" class="img-modal-tab-btn active" id="imgModalTabUpload" onclick="switchImageModalTab('upload')">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload New Image</span>
+                    </button>
+                    <button type="button" class="img-modal-tab-btn" id="imgModalTabLibrary" onclick="switchImageModalTab('library')">
+                        <i class="fa-regular fa-images"></i>
+                        <span>Image Library</span>
+                    </button>
+                </div>
+                <div style="font-size:11px; color:#64748b; font-weight:600;">
+                    <span id="imgModalSelectedIndicator"><i class="fa-solid fa-circle-check" style="color:#10b981;"></i> Current image selected</span>
+                </div>
+            </div>
+
+            <!-- TAB 1: UPLOAD PANEL -->
+            <div id="imgModalUploadPanel" class="img-modal-panel" style="padding:22px; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:16px;">
+                <div class="img-upload-dropzone-large" id="imgUploadDropzoneLarge"
+                     ondragover="handleUploadTabDragOver(event)"
+                     ondragleave="handleUploadTabDragLeave(event)"
+                     ondrop="handleUploadTabDrop(event)"
+                     onclick="document.getElementById('imgUploadTabFileInput').click()">
+                    <div class="img-upload-icon-circle">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <div style="font-size:14px; font-weight:700; color:#f1f5f9; margin-top:4px;">
+                        Drop replacement image here, or <span style="color:#38bdf8; text-decoration:underline;">browse files</span>
+                    </div>
+                    <div style="font-size:11.5px; color:#94a3b8; max-width:480px; text-align:center; margin-top:4px;">
+                        Supports high-res PNG, JPG, JPEG, SVG, WebP, GIF up to 10MB. Layout & surrounding text remain intact.
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <span class="img-upload-badge"><i class="fa-regular fa-file-image"></i> PNG / JPG</span>
+                        <span class="img-upload-badge"><i class="fa-solid fa-vector-square"></i> Vector SVG</span>
+                        <span class="img-upload-badge"><i class="fa-regular fa-clipboard"></i> Paste (Ctrl+V)</span>
+                    </div>
+                    <input type="file" id="imgUploadTabFileInput" accept="image/*" hidden onchange="handleUploadTabFileSelected(event)">
+                </div>
+
+                <!-- STAGED PREVIEW (SHOWN ONCE FILE SELECTED/DROPPED/PASTED) -->
+                <div id="imgUploadStagedPreview" class="img-upload-preview hidden" style="margin-top:6px;">
+                    <div class="img-preview-card">
+                        <div class="img-preview-thumb">
+                            <img id="imgUploadPreviewImg" src="" alt="Staged Upload Preview">
+                        </div>
+                        <div class="img-preview-details">
+                            <div class="img-preview-name" id="imgUploadPreviewName">selected-image.png</div>
+                            <div class="img-preview-meta" id="imgUploadPreviewMeta">Dimensions: Auto • Ready to apply</div>
+                            <div class="img-preview-actions">
+                                <button type="button" class="btn btn-primary" id="imgUploadApplyBtn" onclick="applyUploadedImageToReport()">
+                                    <i class="fa-solid fa-check"></i> <span id="imgUploadApplyBtnText">Apply as Replacement</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="clearUploadTabPreview()">
+                                    <i class="fa-solid fa-xmark"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECENT UPLOADS STRIP -->
+                <div style="margin-top:auto; padding-top:14px; border-top:1px solid #1e293b;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-size:12px; font-weight:700; color:#cbd5e1;"><i class="fa-solid fa-clock-rotate-left me-1"></i> Quick Pick: Recent Uploads</span>
+                        <button type="button" class="btn btn-link btn-xs" onclick="switchImageModalTab('library'); filterImageLibraryCategory('uploaded');" style="color:#38bdf8; font-size:11px; text-decoration:none; cursor:pointer;">View All Uploaded →</button>
+                    </div>
+                    <div id="imgRecentUploadsStrip" class="img-recent-strip">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: IMAGE LIBRARY PANEL -->
+            <div id="imgModalLibraryPanel" class="img-modal-panel hidden" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+                <!-- SEARCH, CATEGORIES & UPLOAD STRIP -->
+                <div style="padding:12px 22px; border-bottom:1px solid var(--border-color, #1e293b); background:rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+                    <div class="cs-seg" id="imgLibCategoryTabs" role="tablist" style="display:flex; gap:4px; background:rgba(11,17,32,0.8); padding:3px; border-radius:8px; border:1px solid rgba(30,41,59,0.8);">
+                        <button type="button" class="tpl-filter-btn active" data-cat="all" onclick="filterImageLibraryCategory('all')">All (<span id="imgLibCountAll">0</span>)</button>
+                        <button type="button" class="tpl-filter-btn" data-cat="logos" onclick="filterImageLibraryCategory('logos')">Logos & Badges</button>
+                        <button type="button" class="tpl-filter-btn" data-cat="templates" onclick="filterImageLibraryCategory('templates')">Covers & Graphics</button>
+                        <button type="button" class="tpl-filter-btn" data-cat="icons" onclick="filterImageLibraryCategory('icons')">Icons</button>
+                        <button type="button" class="tpl-filter-btn" data-cat="uploaded" onclick="filterImageLibraryCategory('uploaded')">Uploaded (<span id="imgLibCountUploaded">0</span>)</button>
+                    </div>
+                    <div style="position:relative; width:260px; max-width:100%;">
+                        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:11px; color:#64748b;"></i>
+                        <input type="search" id="imgLibSearchInput" oninput="handleImageLibrarySearch(this.value)" placeholder="Search name, client, tags..." style="width:100%; padding:6px 10px 6px 30px; font-size:12px; border-radius:8px; background:rgba(11,17,32,0.9); border:1px solid #1e293b; color:#f8fafc; outline:none;">
+                    </div>
+                </div>
+
+                <!-- GALLERY GRID -->
+                <div class="modal-body" style="padding:18px 22px; overflow-y:auto; flex:1;">
+                    <div id="imgLibGrid" class="img-lib-grid">
+                        <!-- Rendered dynamically by renderImageLibraryGrid() -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="modal-footer" style="padding:10px 22px; border-top:1px solid var(--border-color, #1e293b); display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel, #0b1120);">
+                <span id="imgLibSelectionHint" style="font-size:11.5px; color:#94a3b8;"><i class="fa-solid fa-circle-info me-1"></i> Click on any image to use or replace it in your report.</span>
+                <button class="btn btn-secondary" onclick="closeImageLibrary()" style="font-weight:700; padding:5px 14px; font-size:12px; border-radius:8px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD CLIENT & LOGO MODAL -->
+    <div class="modal-overlay hidden" id="addClientModal" data-html2canvas-ignore="true" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(7,10,17,0.88); backdrop-filter:blur(12px); z-index:10015; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-card" style="width:100%; max-width:520px; background:#0f172a; border:1px solid #38bdf8; border-radius:14px; box-shadow:0 25px 60px rgba(0,0,0,0.65); display:flex; flex-direction:column; overflow:hidden;">
+            <div class="modal-header" style="padding:16px 20px; border-bottom:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, #0b1120, #0f172a);">
+                <h3 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px; color:#f8fafc;">
+                    <i class="fa-solid fa-building-circle-check" style="color:#38bdf8;"></i> Tenant & Logo Settings
+                </h3>
+                <button type="button" class="btn btn-icon" onclick="closeAddClientModal()" style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-body" style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+                <div class="form-group">
+                    <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:6px;">Tenant / Organization Name *</label>
+                    <input type="text" id="addClientNameInput" class="styled-input" placeholder="e.g. ACME CORP, QUPOD, VOLTAS" style="width:100%; text-transform:uppercase;" oninput="syncModalClientNamePreview(this.value)">
+                </div>
+
+                <div class="form-group">
+                    <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:6px;">
+                        Tenant Logo (Placed on Left of Report Header)
+                    </label>
+                    <div style="background:#070b13; border:1.5px dashed rgba(56,189,248,0.4); border-radius:8px; padding:16px; text-align:center;">
+                        <!-- Report Ribbon Preview with Logo -->
+                        <div style="margin-bottom:12px; display:flex; justify-content:center;">
+                            <div id="modalClientLogoRibbonPreview" style="background:#002b49; padding:6px 24px 6px 14px; clip-path:polygon(0 0, 85% 0, 100% 100%, 0% 100%); display:flex; align-items:center; gap:8px; min-height:34px;">
+                                <div id="modalClientLogoImgBox" style="display:none;"></div>
+                                <span id="modalClientLogoNamePreview" style="font-family:Arial,sans-serif; font-size:15px; font-weight:900; color:#00b0f0; font-style:italic; letter-spacing:0.5px;">TENANT</span>
+                            </div>
+                        </div>
+
+                        <input type="file" id="addClientLogoFileInput" accept="image/*" hidden onchange="handleAddClientLogoFileSelected(this)">
+                        <div style="display:flex; justify-content:center; gap:10px;">
+                            <button type="button" class="st-btn" onclick="document.getElementById('addClientLogoFileInput').click()" style="padding:5px 14px; font-size:12px;">
+                                <i class="fa-solid fa-upload"></i> Choose Logo File
+                            </button>
+                            <button type="button" class="st-btn" id="btnModalRemoveClientLogo" onclick="removeModalClientLogo()" style="padding:5px 14px; font-size:12px; color:#ef4444; display:none;">
+                                <i class="fa-solid fa-trash-can"></i> Remove
+                            </button>
+                        </div>
+                        <small style="display:block; margin-top:8px; color:#94a3b8; font-size:11px;">Supports PNG, SVG, JPG, WebP. Transparent backgrounds look best.</small>
+                    </div>
+                </div>
+
+                <!-- DEFAULT REPORT CADENCE & TEMPLATE -->
+                <div class="form-group" style="background:#070b13; border:1px solid #1e293b; border-radius:8px; padding:12px 14px;">
+                    <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span><i class="fa-solid fa-layer-group text-blue me-1"></i> Default Report Template (Weekly, Monthly, or Cadence)</span>
+                        <span id="addClientCadenceBadge" style="font-size:10px; color:#38bdf8; font-weight:700;">WEEKLY</span>
+                    </label>
+                    <div style="display:flex; gap:8px; margin-bottom:8px;">
+                        <button type="button" class="btn-cadence-toggle" id="btnAddClientWeekly" onclick="setAddClientCadence('weekly')" style="flex:1; padding:7px 8px; border-radius:6px; border:2px solid #38bdf8; background:rgba(14,165,233,0.18); color:#f8fafc; font-weight:800; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <i class="fa-solid fa-calendar-week" style="color:#38bdf8;"></i> Weekly
+                        </button>
+                        <button type="button" class="btn-cadence-toggle" id="btnAddClientMonthly" onclick="setAddClientCadence('monthly')" style="flex:1; padding:7px 8px; border-radius:6px; border:1px solid #334155; background:rgba(15,23,42,0.5); color:#94a3b8; font-weight:700; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <i class="fa-solid fa-calendar-days" style="color:#a855f7;"></i> Monthly
+                        </button>
+                        <button type="button" class="btn-cadence-toggle" id="btnAddClientCadence" onclick="setAddClientCadence('cadence')" style="flex:1; padding:7px 8px; border-radius:6px; border:1px solid #334155; background:rgba(15,23,42,0.5); color:#94a3b8; font-weight:700; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <i class="fa-solid fa-file-powerpoint" style="color:#f97316;"></i> Cadence
+                        </button>
+                    </div>
+                    <select id="addClientTemplateSelect" class="styled-select" style="width:100%; font-size:12px;">
+                        <!-- Populated dynamically with Weekly, Monthly, or Cadence templates -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding:14px 20px; border-top:1px solid #1e293b; display:flex; justify-content:flex-end; gap:10px; background:#0b1120;">
+                <button type="button" class="st-btn" onclick="closeAddClientModal()">Cancel</button>
+                <button type="button" class="st-btn st-primary" onclick="saveAddClientModal()">
+                    <i class="fa-solid fa-check"></i> Save & Apply to Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMAGE LIGHTBOX / PREVIEW MODAL -->
+    <div class="modal-overlay hidden" id="imageLightboxModal" data-html2canvas-ignore="true" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(3,7,18,0.92); backdrop-filter:blur(14px); z-index:10010; display:none; align-items:center; justify-content:center; padding:30px;" onclick="closeImageLightbox()">
+        <div style="position:relative; max-width:90vw; max-height:90vh; display:flex; flex-direction:column; align-items:center;" onclick="event.stopPropagation()">
+            <button type="button" onclick="closeImageLightbox()" style="position:absolute; top:-40px; right:0; background:transparent; border:none; color:#f8fafc; font-size:20px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <img id="lightboxImg" src="" style="max-width:85vw; max-height:80vh; object-fit:contain; border-radius:10px; box-shadow:0 25px 60px rgba(0,0,0,0.8); border:1px solid rgba(56,189,248,0.3);" alt="Image Preview">
+            <div id="lightboxCaption" style="margin-top:12px; color:#e2e8f0; font-size:13px; font-weight:700; text-align:center;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: SEND REPORT TO CLIENT -->
+    <div class="modal-backdrop hidden" id="sendToClientModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(3,7,18,0.85); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; z-index:10020; padding:20px;" onclick="closeSendToClientModal()">
+        <div class="modal-dialog" style="background:#0f172a; border:1px solid #1e293b; border-radius:14px; width:100%; max-width:520px; padding:24px; box-shadow:0 25px 60px rgba(0,0,0,0.7); position:relative;" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 style="margin:0; font-size:16px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-paper-plane" style="color:#0ea5e9;"></i> Dispatch Report to Tenant
+                </h3>
+                <button type="button" onclick="closeSendToClientModal()" style="background:transparent; border:none; color:#94a3b8; font-size:16px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <input type="hidden" id="sendModalReportId">
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:10px 14px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.04em;">TENANT / ORGANIZATION</span>
+                        <div id="sendModalClientName" style="font-size:14px; font-weight:800; color:#38bdf8; margin-top:2px;">-</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.04em;">REPORTING PERIOD</span>
+                        <div id="sendModalReportPeriod" style="font-size:12px; font-weight:600; color:#f1f5f9; margin-top:2px;">-</div>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.04em;">Recipient Stakeholder Email(s)</label>
+                    <input type="email" id="sendModalRecipientEmail" placeholder="e.g. ciso@tenantorganization.com, security.team@tenant.com" style="width:100%; padding:8px 12px; font-size:12px; border-radius:6px; background:#1e293b; border:1px solid #334155; color:#fff; margin-top:4px; box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.04em;">Delivery Channel</label>
+                    <select id="sendModalChannel" style="width:100%; padding:8px 12px; font-size:12px; border-radius:6px; background:#1e293b; border:1px solid #334155; color:#fff; margin-top:4px; box-sizing:border-box;">
+                        <option value="Secure Email Dispatch (PDF Attached)">Secure Email Dispatch (PDF Attached)</option>
+                        <option value="Tenant Portal / API Sync">Tenant Portal / Telemetry Sync</option>
+                        <option value="Encrypted Direct Download Link">Encrypted Direct Download Link</option>
+                        <option value="Executive Briefing / Presentation">Executive Briefing / Meeting</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.04em;">Dispatch Notes / Message</label>
+                    <textarea id="sendModalNotes" rows="2" placeholder="e.g. Approved executive monthly SOC report dispatched for tenant review..." style="width:100%; padding:8px 12px; font-size:12px; border-radius:6px; background:#1e293b; border:1px solid #334155; color:#fff; margin-top:4px; box-sizing:border-box; resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeSendToClientModal()" style="padding:6px 14px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="confirmSendReportToClient()" style="padding:6px 16px; font-weight:700; background:linear-gradient(135deg, #0ea5e9, #0284c7); border:none; border-radius:6px; color:#fff; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-paper-plane"></i> Confirm & Mark Sent
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HIDDEN INPUTS FOR REPLACE & INSERT -->
+    <input type="file" id="reportImageReplaceInput" accept="image/*" hidden onchange="handleDirectImageReplace(event)">
+    <input type="file" id="reportImageInsertInput" accept="image/*" hidden onchange="handleDirectImageInsert(event)">
+
+    <!-- BASE64 ASSET DATA & APPLICATION LOGIC -->
+    <script src="image_data.js"></script>
+    <script src="chart_engine.js?v=6"></script>
+    <script src="dashboard_widgets.js?v=2"></script>
+    <script src="cadence_deck.js?v=7"></script>
+    <script src="cadence_templates.js?v=5"></script>
+    <script src="section_designs.js?v=5"></script>
+    <script src="app.js?v=118"></script>
+</body>
+</html>
