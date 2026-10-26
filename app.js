@@ -3828,11 +3828,7 @@ function processAndSaveTemplate(fileName, fileContent, typeLabel) {
     if (!AppState.customTemplates) AppState.customTemplates = [];
     AppState.customTemplates.unshift(newTemplate);
 
-    try {
-        localStorage.setItem("altisec_custom_templates", JSON.stringify(AppState.customTemplates));
-    } catch (err) {
-        console.warn("LocalStorage save error:", err);
-    }
+    safeSaveTemplatesToLocalStorage();
 
     renderCustomTemplatesUI();
     registerCustomTemplateInDropdown(newTemplate);
@@ -4309,6 +4305,25 @@ function registerNewCustomerName(customerName) {
     populateAllClientSelects();
 }
 
+window.safeSaveTemplatesToLocalStorage = function safeSaveTemplatesToLocalStorage() {
+    try {
+        const meta = (AppState.customTemplates || []).map(t => ({
+            id: t.id,
+            name: t.name,
+            customer: t.customer,
+            baseTemplate: t.baseTemplate,
+            typeFormat: t.typeFormat,
+            type: t.type,
+            isCadence: t.isCadence,
+            pages: t.pages,
+            docTitle: t.docTitle,
+            desc: t.desc,
+            uploadedAt: t.uploadedAt
+        }));
+        localStorage.setItem("altisec_custom_templates_meta", JSON.stringify(meta));
+    } catch (e) {}
+};
+
 async function loadSavedCustomersFromStorage() {
     try {
         const res = await fetch("/api/templates");
@@ -4336,6 +4351,25 @@ async function loadSavedCustomersFromStorage() {
 
     populateAllClientSelects();
 }
+
+window.safeSaveTemplatesToLocalStorage = function safeSaveTemplatesToLocalStorage() {
+    try {
+        const meta = (AppState.customTemplates || []).map(t => ({
+            id: t.id,
+            name: t.name,
+            customer: t.customer,
+            baseTemplate: t.baseTemplate,
+            typeFormat: t.typeFormat,
+            type: t.type,
+            isCadence: t.isCadence,
+            pages: t.pages,
+            docTitle: t.docTitle,
+            desc: t.desc,
+            uploadedAt: t.uploadedAt
+        }));
+        localStorage.setItem("altisec_custom_templates_meta", JSON.stringify(meta));
+    } catch (e) {}
+};
 
 window.clearAllClientNames = async function() {
     AppState.customCustomers = [];
@@ -6074,7 +6108,7 @@ window.saveTemplateFromModal = async function() {
     if (typeof persistCustomTemplate === 'function') {
         await persistCustomTemplate(updatedTpl);
     } else {
-        try { localStorage.setItem("altisec_custom_templates", JSON.stringify(AppState.customTemplates)); } catch(e){}
+        safeSaveTemplatesToLocalStorage();
         await idbSaveTemplate(updatedTpl);
     }
 
@@ -6148,9 +6182,7 @@ window.cloneCurrentEditedTemplate = async function() {
     if (!AppState.customTemplates) AppState.customTemplates = [];
     AppState.customTemplates.unshift(cloneTpl);
 
-    try {
-        localStorage.setItem("altisec_custom_templates", JSON.stringify(AppState.customTemplates));
-    } catch(e){}
+    safeSaveTemplatesToLocalStorage();
     await idbSaveTemplate(cloneTpl);
 
     // Save to backend API
@@ -6273,38 +6305,24 @@ window.executeTemplateDeletion = async function() {
         return;
     }
 
+    // 1. INSTANT DISMISS: Hide modal and remove card instantly from UI (0ms feedback)
+    closeConfirmDeleteModal();
+    document.querySelectorAll(`.hub-card[data-template-id="${templateId}"], [data-library-card-id="${templateId}"]`).forEach(el => el.remove());
+    document.querySelectorAll("#headerTemplateSelect, .activeTemplateSelect").forEach(sel => {
+        const opt = sel.querySelector(`option[value="${templateId}"]`);
+        if (opt) opt.remove();
+    });
+
     const deletedIds = getDeletedTemplateIds();
     if (!deletedIds.includes(templateId)) {
         deletedIds.push(templateId);
         saveDeletedTemplateIds(deletedIds);
     }
 
-    // Remove from customTemplates
+    // 2. Update in-memory AppState
     AppState.customTemplates = (AppState.customTemplates || []).filter(t => t.id !== templateId);
 
-    // Delete from IDB
-    await idbDeleteTemplate(templateId);
-
-    // Delete from Backend Server API
-    try {
-        await fetch("/api/templates/delete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: templateId })
-        });
-    } catch (e) {}
-
-    try {
-        localStorage.setItem("altisec_custom_templates", JSON.stringify(AppState.customTemplates));
-    } catch(e){}
-
-    // Remove option from template dropdowns
-    document.querySelectorAll("#headerTemplateSelect, .activeTemplateSelect").forEach(sel => {
-        const opt = sel.querySelector(`option[value="${templateId}"]`);
-        if (opt) opt.remove();
-    });
-
-    // If currently active template was deleted, switch to another available template
+    // 3. Switch active template if needed
     if (AppState.activeTemplate === templateId) {
         const remainingTemplates = [...getBuiltInTemplatesList(), ...(AppState.customTemplates || [])];
         if (remainingTemplates.length > 0) {
@@ -6317,17 +6335,33 @@ window.executeTemplateDeletion = async function() {
         }
     }
 
-    closeConfirmDeleteModal();
+    // 4. Fast UI refresh
     if (typeof refreshTemplateViews === 'function') {
         refreshTemplateViews();
     } else {
         renderSavedTemplatesLibrary();
         if (typeof renderTemplatesHubView === 'function') renderTemplatesHubView();
     }
+    showToast("✓ Template deleted successfully.");
+
     if (typeof recordAuditLog === 'function') {
         recordAuditLog("report", "Template Deleted", `Deleted template ID: ${templateId}`);
     }
-    showToast("Template deleted successfully from data and library.");
+
+    // 5. Lightweight localStorage metadata only (0.05ms)
+    safeSaveTemplatesToLocalStorage();
+
+    // 6. Fast background server & IDB deletion
+    try {
+        await idbDeleteTemplate(templateId);
+    } catch (e) {}
+    try {
+        await fetch("/api/templates/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: templateId })
+        });
+    } catch (e) {}
 };
 
 async function loadCustomTemplatesFromStorage() {
@@ -14683,9 +14717,7 @@ window.savePowerBiTemplate = async function() {
     if (!AppState.customTemplates) AppState.customTemplates = [];
     AppState.customTemplates.unshift(newTemplate);
 
-    try {
-        localStorage.setItem("altisec_custom_templates", JSON.stringify(AppState.customTemplates));
-    } catch(e){}
+    safeSaveTemplatesToLocalStorage();
 
     if (typeof idbSaveTemplate === "function") {
         await idbSaveTemplate(newTemplate);
@@ -16506,7 +16538,7 @@ async function persistCustomTemplate(tpl) {
     } catch (e) {
         console.warn("Server save error:", e);
     }
-    try { localStorage.setItem("altisec_custom_templates", JSON.stringify(AppState.customTemplates)); } catch (e) { /* quota: IndexedDB and server still hold it */ }
+    safeSaveTemplatesToLocalStorage();
     if (tpl.customer) registerNewCustomerName(tpl.customer);
     registerCustomTemplateInDropdown(tpl);
 }

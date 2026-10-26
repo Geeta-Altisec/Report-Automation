@@ -44,7 +44,7 @@ function loadTemplatesStore() {
 
 function saveTemplatesStore(data) {
     try {
-        fs.writeFileSync(TEMPLATES_STORE_PATH, JSON.stringify(data, null, 2), 'utf8');
+        fs.writeFileSync(TEMPLATES_STORE_PATH, JSON.stringify(data), 'utf8');
         return true;
     } catch (e) {
         console.error('[Template Store] Save Error:', e.message);
@@ -135,7 +135,7 @@ const server = http.createServer((req, res) => {
 
                 saveTemplatesStore(store);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, template: tpl, templates: store.templates, customers: store.customers }));
+                res.end(JSON.stringify({ success: true, id: tpl.id, customers: store.customers }));
             } catch (err) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: err.message }));
@@ -155,7 +155,7 @@ const server = http.createServer((req, res) => {
                 store.templates = store.templates.filter(t => t.id !== id);
                 saveTemplatesStore(store);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, templates: store.templates }));
+                res.end(JSON.stringify({ success: true, id: id }));
             } catch (err) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: err.message }));
