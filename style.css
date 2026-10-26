@@ -6751,7 +6751,7 @@ body.studio-preview .table-action-btn,
 body.studio-preview .ucs-controls,
 body.studio-preview .ucs-drag-handle,
 body.studio-preview .ucs-card-actions,
-body.studio-preview [data-html2canvas-ignore="true"],
+body.studio-preview #a4DocumentPreview [data-html2canvas-ignore="true"],
 #a4DocumentPreview.export-preview .btn-section-designs,
 #a4DocumentPreview.export-preview .section-add-slot,
 #a4DocumentPreview.export-preview .btn-add-section-insert,
@@ -6989,59 +6989,100 @@ body.exporting-pdf .table-editor-actions-bar,
     margin-bottom: 4px !important;
 }
 
-/* =========================================================================
-   EXACT HIGH-FIDELITY WORD (.DOCX) & PDF TEMPLATE RENDERING SYSTEM
-   Preserves original margins, typography, floating anchors, tables & layouts
-   without displacement, font enlargement, or page overflow.
-   ========================================================================= */
 
-/* 1. Prevent Word anchored floating graphics (zero-dimension wrappers) from displacing document flow */
-div[style*="width: 0px"][style*="height: 0px"],
-div[style*="width:0px"][style*="height:0px"],
-div[style*="width: 0pt"][style*="height: 0pt"],
-div[style*="width:0pt"][style*="height:0pt"],
-span > div[style*="width: 0px"],
-span > div[style*="width:0px"],
-span > div[style*="width: 0pt"],
-span > div[style*="width:0pt"] {
-    position: absolute !important;
-}
-div[style*="width: 0px"] > img,
-div[style*="width:0px"] > img,
-div[style*="width: 0pt"] > img,
-div[style*="width:0pt"] > img {
-    position: absolute !important;
-}
 
-/* 2. Isolate DOCX section cards so application typography styles do NOT bleed in */
-section.docx, .docx-page-card {
-    box-sizing: border-box !important;
-    position: relative !important;
-    background: #ffffff !important;
+
+
+
+
+
+
+/* ==========================================================================
+   HIGH-FIDELITY CUSTOM UPLOADED TEMPLATE (DOCX & PDF) ENGINE
+   Guarantees exact 1:1 layout, zero whitespace displacement, original fonts,
+   original tables, chart images, and logos without distortion (ilovepdf parity).
+   ========================================================================== */
+
+/* 1. DOCX PAGES: Prevent .a4-page-card generic padding/fonts from overriding Word layout */
+.docx-page-card,
+section.docx,
+.a4-page-card.docx-page-card,
+#a4DocumentPreview section.docx {
     width: 794px !important;
     min-width: 794px !important;
     max-width: 794px !important;
+    min-height: 1123px;
     margin: 0 auto 30px auto !important;
+    background: #ffffff !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
     border-radius: 4px !important;
-    padding: 0 !important;
-    overflow: visible !important;
-}
-
-section.docx article {
+    position: relative !important;
     box-sizing: border-box !important;
-    width: 100% !important;
+    overflow: hidden !important;
 }
 
-/* 3. Typography protection for DOCX elements (do not let global styles override font sizes) */
-section.docx h1, section.docx h2, section.docx h3, section.docx h4,
-section.docx p, section.docx span, section.docx table, section.docx td, section.docx th {
-    font-family: inherit;
-    letter-spacing: normal;
+/* 2. FIX FLOATING SHAPES, SIDEBARS & BACKGROUND GRAPHICS IN DOCX PREVIEW */
+/* Prevents anchored background frames (height ~778pt) inside zero-dim divs from pushing text down by 1000px */
+section.docx div[style*="width: 0px"][style*="height: 0px"],
+section.docx div[style*="width:0px"][style*="height:0px"],
+section.docx div[style*="width: 0pt"][style*="height: 0pt"],
+.docx-page-card div[style*="width: 0px"][style*="height: 0px"],
+.docx-page-card div[style*="width:0px"][style*="height:0px"],
+.docx-page-card div[style*="width: 0pt"][style*="height: 0pt"] {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    pointer-events: none !important;
 }
 
-/* 4. Full-bleed exact PDF page cards (iLovePDF parity) */
-.pdf-page-card {
+section.docx div[style*="width: 0px"][style*="height: 0px"] img,
+section.docx div[style*="width: 0px"][style*="height: 0px"] svg,
+section.docx div[style*="width:0px"][style*="height:0px"] img,
+section.docx div[style*="width:0px"][style*="height:0px"] svg,
+.docx-page-card div[style*="width: 0px"][style*="height: 0px"] img,
+.docx-page-card div[style*="width: 0px"][style*="height: 0px"] svg,
+.docx-page-card div[style*="width:0px"][style*="height:0px"] img,
+.docx-page-card div[style*="width:0px"][style*="height:0px"] svg {
+    position: absolute !important;
+    pointer-events: none !important;
+}
+
+/* Prevent empty paragraphs containing only floating anchors from taking up vertical line space */
+section.docx p:has(> span > div[style*="width: 0px"]):not(:has(span:not(:has(div)))),
+section.docx p:has(> span > div[style*="width:0px"]):not(:has(span:not(:has(div)))),
+.docx-page-card p:has(> span > div[style*="width: 0px"]):not(:has(span:not(:has(div)))),
+.docx-page-card p:has(> span > div[style*="width:0px"]):not(:has(span:not(:has(div)))) {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+}
+
+/* 3. PRESERVE ORIGINAL WORD TYPOGRAPHY & PREVENT FONT SWELLING */
+section.docx :is(p, span, h1, h2, h3, h4, h5, h6, table, td, th),
+.docx-page-card :is(p, span, h1, h2, h3, h4, h5, h6, table, td, th) {
+    box-sizing: border-box;
+    text-rendering: optimizeLegibility;
+}
+
+/* Preserve Word tables */
+section.docx table,
+.docx-page-card table {
+    max-width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 12px;
+}
+
+/* 4. PDF PAGES: EXACT 1:1 CANVAS PIXEL FIDELITY (MATCHING ILOVEPDF) */
+.pdf-page-card,
+.a4-page-card.pdf-page-card,
+#a4DocumentPreview .pdf-page-card {
     width: 794px !important;
     min-width: 794px !important;
     max-width: 794px !important;
@@ -7055,21 +7096,51 @@ section.docx p, section.docx span, section.docx table, section.docx td, section.
     border-radius: 4px !important;
     position: relative !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
     display: block !important;
 }
 
+.pdf-page-card canvas,
 .pdf-page-card img {
-    width: 100% !important;
-    height: 100% !important;
+    width: 794px !important;
+    height: 1123px !important;
+    max-width: 794px !important;
+    max-height: 1123px !important;
     object-fit: fill !important;
     display: block !important;
     pointer-events: none !important;
 }
 
+/* PDF editable text layer */
+.pdf-text-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: auto;
+}
 
+.pdf-text-layer [contenteditable="true"] {
+    outline: none;
+    cursor: text;
+    transition: background-color 0.15s, box-shadow 0.15s;
+}
 
+.pdf-text-layer [contenteditable="true"]:hover {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-radius: 2px;
+}
 
+.pdf-text-layer [contenteditable="true"]:focus {
+    background-color: rgba(239, 246, 255, 0.9);
+    box-shadow: 0 0 0 1.5px #3b82f6;
+    border-radius: 2px;
+}
 
-
-
-
+/* 5. THEME ISOLATION FOR CUSTOM TEMPLATES */
+#a4DocumentPreview:is(.rp-executive, .rp-socops, .rp-minimal, .rp-dark) :is(.docx-page-card, section.docx, .pdf-page-card),
+#a4DocumentPreview:is(.rp-executive, .rp-socops, .rp-minimal, .rp-dark) :is(.docx-page-card, section.docx, .pdf-page-card) :is(h1, h2, h3, h4, p, li, td, th, strong, span, div):not(.fa-solid) {
+    font-family: inherit !important;
+}

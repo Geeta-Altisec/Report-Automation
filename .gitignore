@@ -1,13 +1,9 @@
 # local backups made during the redesign
 *.bak-pre-*
 
-# local editor config
+# local Claude Code / editor config
 .claude/
 .vscode/
-.idea/
 
 node_modules/
 *.log
-Thumbs.db
-Desktop.ini
-.DS_Store

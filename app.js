@@ -4261,11 +4261,26 @@ function populateAllClientSelects() {
         editCustSelect.innerHTML = `
             <option value="Global / All Clients">Global / All Tenants</option>
             ${customers.map(c => `<option value="${escapeAuditHtml(c)}">${escapeAuditHtml(c)}</option>`).join("")}
+            <option value="__add_new_client__">+ Enter Custom Tenant...</option>
         `;
         if (customers.includes(curVal) || curVal === "Global / All Clients" || curVal === "Global / All Tenants") {
             editCustSelect.value = curVal;
+        } else if (AppState.activeClient && customers.includes(AppState.activeClient)) {
+            editCustSelect.value = AppState.activeClient;
         } else {
             editCustSelect.value = "Global / All Clients";
+        }
+    }
+
+    const hubClientSelect = document.getElementById("tplHubClientSelect");
+    if (hubClientSelect) {
+        const curVal = hubClientSelect.value || "all";
+        hubClientSelect.innerHTML = `<option value="all">All Tenants</option>` +
+            customers.map(c => `<option value="${escapeAuditHtml(c)}">${escapeAuditHtml(c)}</option>`).join("");
+        if (customers.includes(curVal) || curVal === "all") {
+            hubClientSelect.value = curVal;
+        } else {
+            hubClientSelect.value = "all";
         }
     }
 }
@@ -4703,9 +4718,9 @@ window.openCreateTemplateModal = function(initialValues = {}) {
         nameInput.placeholder = "e.g. Executive SOC Weekly Template";
     }
 
-    // Hide base layout selection row for new templates (totally new custom template)
+    // Show base layout selection row
     const layoutRow = document.getElementById("modalTemplateLayoutAndTitleRow");
-    if (layoutRow) layoutRow.style.display = "none";
+    if (layoutRow) layoutRow.style.display = "grid";
 
     // Reset file upload dropzone UI
     if (fileInput) fileInput.value = "";
@@ -4714,19 +4729,44 @@ window.openCreateTemplateModal = function(initialValues = {}) {
         dropzone.style.background = "rgba(15,23,42,0.6)";
     }
     if (dropIcon) dropIcon.className = "fa-solid fa-cloud-arrow-up drop-icon";
-    if (dropTitle) dropTitle.textContent = "Drop a Word (.docx), PPT or template file here";
+    if (dropTitle) dropTitle.textContent = "Drop a Word (.docx), PPT or template file here (Optional)";
     if (dropSub) dropSub.textContent = "or click to browse files from your device";
+
+    // Reset inline tenant input if open
+    if (typeof cancelTemplateInlineTenantInput === 'function') {
+        cancelTemplateInlineTenantInput();
+    } else {
+        const inlineBox = document.getElementById("templateInlineTenantBox");
+        const inlineInp = document.getElementById("editTemplateInlineTenantInput");
+        if (inlineBox) inlineBox.style.display = "none";
+        if (inlineInp) inlineInp.value = "";
+    }
 
     // Populate customer select
     if (custSelect) {
-        const customers = [...new Set((AppState.customCustomers || []).concat(AppState.savedCustomers || []).filter(Boolean))];
+        const rawList = (AppState.customCustomers || []).concat(AppState.savedCustomers || []);
+        const customers = [...new Set(rawList.filter(isValidClientName).map(c => c.trim()))].sort();
+        
+        let clientVal = 'Global / All Clients';
+        if (initialValues.customer && isValidClientName(initialValues.customer)) {
+            clientVal = initialValues.customer.trim();
+        } else if (AppState.activeClient && isValidClientName(AppState.activeClient)) {
+            clientVal = AppState.activeClient.trim();
+        }
+
+        if (clientVal !== 'Global / All Clients' && !customers.includes(clientVal)) {
+            customers.push(clientVal);
+            customers.sort();
+        }
+
         custSelect.innerHTML = `
             <option value="Global / All Clients">Global / All Tenants</option>
             ${customers.map(c => `<option value="${escapeAuditHtml(c)}">${escapeAuditHtml(c)}</option>`).join("")}
+            <option value="__add_new_client__">+ Enter Custom Tenant...</option>
         `;
-        custSelect.value = initialValues.customer || AppState.activeClient || 'Global / All Clients';
+        custSelect.value = clientVal;
         if (typeof syncTemplateModalClientLogo === 'function') {
-            syncTemplateModalClientLogo(custSelect.value);
+            syncTemplateModalClientLogo(clientVal);
         }
     }
 
@@ -4808,13 +4848,26 @@ window.openTemplateEditorModal = function(templateId) {
     if (dropTitle) dropTitle.textContent = "Replace / update content from file (Optional)";
     if (dropSub) dropSub.textContent = "Word (.docx), PowerPoint (.pptx), HTML, or JSON";
 
+    // Reset inline tenant input if open
+    if (typeof cancelTemplateInlineTenantInput === 'function') {
+        cancelTemplateInlineTenantInput();
+    }
+
     // Populate customer select
     if (custSelect) {
-        const customers = [...new Set((AppState.customCustomers || []).concat(AppState.savedCustomers || []).filter(Boolean))];
-        const clientVal = tpl.customer || tpl.clientName || 'Global / All Clients';
+        const rawList = (AppState.customCustomers || []).concat(AppState.savedCustomers || []);
+        const customers = [...new Set(rawList.filter(isValidClientName).map(c => c.trim()))].sort();
+        const clientVal = (tpl.customer && isValidClientName(tpl.customer)) ? tpl.customer.trim() : (tpl.clientName && isValidClientName(tpl.clientName)) ? tpl.clientName.trim() : 'Global / All Clients';
+        
+        if (clientVal !== 'Global / All Clients' && !customers.includes(clientVal)) {
+            customers.push(clientVal);
+            customers.sort();
+        }
+
         custSelect.innerHTML = `
             <option value="Global / All Clients">Global / All Tenants</option>
             ${customers.map(c => `<option value="${escapeAuditHtml(c)}">${escapeAuditHtml(c)}</option>`).join("")}
+            <option value="__add_new_client__">+ Enter Custom Tenant...</option>
         `;
         custSelect.value = clientVal;
         if (typeof syncTemplateModalClientLogo === 'function') {
@@ -4968,6 +5021,13 @@ window.handleModalTemplateFileSelected = async function(input) {
 
     const ext = fileName.split('.').pop().toLowerCase();
 
+    // Reset temporary base64 holders
+    window._lastUploadedDocxBase64 = null;
+    window._lastUploadedPdfBase64 = null;
+    window._lastUploadedPdfBase64 = null;
+    window._lastUploadedDocxName = null;
+    window._lastUploadedPdfName = null;
+
     if (ext === 'docx' || ext === 'doc') {
         if (fmtSelect) fmtSelect.value = 'docx';
 
@@ -4977,7 +5037,7 @@ window.handleModalTemplateFileSelected = async function(input) {
                 try {
                     const arrayBuffer = e.target.result;
                     
-                    // Convert arrayBuffer to base64 safely without stack overflow
+                    // Convert arrayBuffer to base64 safely
                     let binary = '';
                     const bytes = new Uint8Array(arrayBuffer);
                     const len = bytes.byteLength;
@@ -4989,7 +5049,7 @@ window.handleModalTemplateFileSelected = async function(input) {
                     window._lastUploadedDocxBase64 = rawDocxBase64;
                     window._lastUploadedDocxName = fileName;
 
-                    // Priority 1: High-fidelity exact Word DOCX renderer (preserves cover page, margins, fonts, tables, cell colors, images)
+                    // Priority 1: High-fidelity exact Word DOCX renderer with zero-displacement & floating anchor fix
                     if (window.docx && typeof window.docx.renderAsync === 'function') {
                         const tempContainer = document.createElement("div");
                         const options = {
@@ -5011,35 +5071,56 @@ window.handleModalTemplateFileSelected = async function(input) {
 
                         await window.docx.renderAsync(arrayBuffer, tempContainer, null, options);
 
-                        const sections = Array.from(tempContainer.querySelectorAll("section.docx"));
-                        let validPageCount = 0;
-                        sections.forEach((sec) => {
+                        // 1. Prune phantom empty sections (created by trailing page breaks)
+                        const allSections = Array.from(tempContainer.querySelectorAll("section.docx"));
+                        allSections.forEach(sec => {
                             const text = sec.innerText.trim();
-                            const hasImg = sec.querySelectorAll("img").length > 0;
-                            const hasSvg = sec.querySelectorAll("svg").length > 0;
-                            const hasTbl = sec.querySelectorAll("table").length > 0;
-
-                            // Filter out empty blank phantom pages generated by Word page breaks
-                            if (!text && !hasImg && !hasSvg && !hasTbl) {
+                            const hasMedia = sec.querySelector("img, svg, table, canvas");
+                            if (!text && !hasMedia) {
                                 sec.remove();
-                                return;
                             }
-                            validPageCount++;
+                        });
+
+                        // 2. Fix floating anchored graphics & zero-dimension wrapper divs so they take zero vertical line space
+                        tempContainer.querySelectorAll('div[style*="width: 0px"], div[style*="width:0px"], div[style*="width: 0pt"]').forEach(div => {
+                            div.style.position = 'absolute';
+                            div.style.top = '0';
+                            div.style.left = '0';
+                            div.style.width = '0';
+                            div.style.height = '0';
+                            div.style.margin = '0';
+                            div.style.padding = '0';
+                            div.style.pointerEvents = 'none';
+                            div.querySelectorAll('img, svg').forEach(media => {
+                                media.style.position = 'absolute';
+                                media.style.pointerEvents = 'none';
+                            });
+                        });
+
+                        // 3. Format valid sections as A4 page cards
+                        const validSections = Array.from(tempContainer.querySelectorAll("section.docx"));
+                        validSections.forEach((sec, idx) => {
                             sec.classList.add("a4-page-card", "docx-page-card");
-                            sec.setAttribute("data-sec", `docx-page-${validPageCount}`);
+                            sec.setAttribute("data-sec", `docx-page-${idx + 1}`);
+                            sec.style.width = "794px";
+                            sec.style.minWidth = "794px";
+                            sec.style.maxWidth = "794px";
+                            sec.style.minHeight = "1123px";
                             sec.style.margin = "0 auto 30px auto";
                             sec.style.boxShadow = "0 4px 15px rgba(0,0,0,0.08)";
                             sec.style.borderRadius = "4px";
                             sec.style.background = "#ffffff";
                             sec.style.position = "relative";
                             sec.style.boxSizing = "border-box";
+                            sec.style.overflow = "hidden";
+                            sec.style.padding = "36pt";
                         });
 
                         const parsedPagesHtml = tempContainer.innerHTML;
                         if (customHtmlInput) {
                             customHtmlInput.value = parsedPagesHtml;
                         }
-                        const pageCount = validPageCount || sections.length || 1;
+                        const pageCount = validSections.length || 1;
                         if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> ${escapeAuditHtml(fileName)}`;
                         if (dropSub) dropSub.textContent = `Word document rendered with exact layout (${pageCount} pages). Original typography, tables, and graphics preserved.`;
                         if (dropIcon) dropIcon.className = "fa-solid fa-file-word text-blue";
@@ -5079,67 +5160,87 @@ window.handleModalTemplateFileSelected = async function(input) {
         if (fmtSelect) fmtSelect.value = 'custom';
         return new Promise((resolve) => {
             if (window.pdfjsLib) {
-                try {
-                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                    const reader = new FileReader();
-                    reader.onload = async function(e) {
-                        try {
-                            const arrayBuffer = e.target.result;
-                            // Convert arrayBuffer to base64 safely
-                            let binary = '';
-                            const bytes = new Uint8Array(arrayBuffer);
-                            const len = bytes.byteLength;
-                            const chunkSize = 8192;
-                            for (let i = 0; i < len; i += chunkSize) {
-                                binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)));
-                            }
-                            const rawPdfBase64 = btoa(binary);
-                            window._lastUploadedPdfBase64 = rawPdfBase64;
-                            window._lastUploadedPdfName = fileName;
-
-                            const typedarray = new Uint8Array(arrayBuffer);
-                            const pdf = await window.pdfjsLib.getDocument(typedarray).promise;
-                            const numPages = pdf.numPages;
-                            let pagesHtml = '';
-                            for (let i = 1; i <= numPages; i++) {
-                                const page = await pdf.getPage(i);
-                                const unscaledViewport = page.getViewport({ scale: 1.0 });
-                                const targetWidth = 794;
-                                const scale = (targetWidth / unscaledViewport.width) * 2; // Hi-DPI crisp scale
-                                const viewport = page.getViewport({ scale: scale });
-                                const canvas = document.createElement('canvas');
-                                const ctx = canvas.getContext('2d');
-                                canvas.height = viewport.height;
-                                canvas.width = viewport.width;
-                                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-                                const dataUrl = canvas.toDataURL('image/png', 0.98);
-                                pagesHtml += `
-                                    <div class="a4-page-card pdf-page-card" data-sec="pdf-page-${i}" style="width: 794px; min-width: 794px; max-width: 794px; height: 1123px; min-height: 1123px; max-height: 1123px; padding: 0; margin: 0 auto 30px auto; background: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-radius: 4px; position: relative; overflow: hidden; display: block;">
-                                        <img src="${dataUrl}" style="width: 100%; height: 100%; object-fit: fill; display: block; pointer-events: none;" alt="Page ${i}">
-                                    </div>
-                                `;
-                            }
-                            if (customHtmlInput) customHtmlInput.value = pagesHtml;
-                            if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> ${escapeAuditHtml(fileName)}`;
-                            if (dropSub) dropSub.textContent = `PDF template parsed with exact original design (${numPages} pages). All typography, images, and tables preserved.`;
-                            if (dropIcon) dropIcon.className = "fa-solid fa-file-pdf text-rose";
-                            showToast(`📄 Parsed ${numPages}-page PDF template "${fileName}" with exact design & layout`);
-                            resolve(pagesHtml);
-                        } catch (pdfErr) {
-                            console.error("PDF parse error:", pdfErr);
-                            if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-file-pdf text-rose"></i> ${escapeAuditHtml(fileName)}`;
-                            if (dropSub) dropSub.textContent = `Attached PDF document (${(file.size / 1024).toFixed(1)} KB)`;
-                            showToast(`Attached PDF file "${fileName}"`);
-                            resolve();
+                window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const arrayBuffer = e.target.result;
+                        let binary = '';
+                        const bytes = new Uint8Array(arrayBuffer);
+                        const len = bytes.byteLength;
+                        const chunkSize = 8192;
+                        for (let i = 0; i < len; i += chunkSize) {
+                            binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)));
                         }
-                    };
-                    reader.onerror = () => resolve();
-                    reader.readAsArrayBuffer(file);
-                } catch (err) {
-                    if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-file-pdf text-rose"></i> ${escapeAuditHtml(fileName)}`;
-                    if (dropSub) dropSub.textContent = `Attached PDF document (${(file.size / 1024).toFixed(1)} KB)`;
-                    resolve();
-                }
+                        const rawPdfBase64 = btoa(binary);
+                        window._lastUploadedPdfBase64 = rawPdfBase64;
+                        window._lastUploadedPdfName = fileName;
+
+                        const typedarray = new Uint8Array(arrayBuffer);
+                        const pdf = await window.pdfjsLib.getDocument(typedarray).promise;
+                        const numPages = pdf.numPages;
+                        let pagesHtml = '';
+
+                        for (let i = 1; i <= numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const unscaledViewport = page.getViewport({ scale: 1 });
+                            const scaleX = 794 / unscaledViewport.width;
+                            const scaleY = 1123 / unscaledViewport.height;
+                            const scale = Math.min(scaleX, scaleY);
+                            const dpr = 2; // Retina sharpness for exact typography & graphics
+                            const viewport = page.getViewport({ scale: scale * dpr });
+
+                            const canvas = document.createElement('canvas');
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            const ctx = canvas.getContext('2d');
+                            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                            const dataUrl = canvas.toDataURL('image/png');
+
+                            // High-precision text overlay layer for inline editing (ilovepdf parity)
+                            let textLayerHtml = '';
+                            try {
+                                const textContent = await page.getTextContent();
+                                if (textContent && textContent.items && textContent.items.length > 0) {
+                                    const textSpans = textContent.items.map(item => {
+                                        const tx = item.transform;
+                                        const itemX = (tx[4] * scale).toFixed(1);
+                                        const itemY = (1123 - (tx[5] * scale)).toFixed(1);
+                                        const fontSize = Math.max(9, Math.round(Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]) * scale));
+                                        const itemText = escapeAuditHtml(item.str || '');
+                                        if (!itemText.trim()) return '';
+                                        return `<span contenteditable="true" style="position: absolute; left: ${itemX}px; top: ${itemY}px; font-size: ${fontSize}px; font-family: inherit; color: transparent; background: transparent; cursor: text; line-height: 1;" onfocus="this.style.color='#0f172a'; this.style.background='rgba(255,255,255,0.92)'; this.style.zIndex='20';" onblur="if(!this.dataset.edited){ this.style.color='transparent'; this.style.background='transparent'; this.style.zIndex='10'; }">${itemText}</span>`;
+                                    }).filter(Boolean);
+                                    textLayerHtml = `<div class="pdf-text-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 10;">${textSpans.join('')}</div>`;
+                                }
+                            } catch(te) {
+                                console.warn("PDF text layer extraction warning:", te);
+                            }
+
+                            pagesHtml += `
+                                <div class="a4-page-card pdf-page-card" data-sec="pdf-page-${i}" style="width: 794px; min-width: 794px; max-width: 794px; height: 1123px; min-height: 1123px; max-height: 1123px; padding: 0; margin: 0 auto 30px auto; background: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-radius: 4px; position: relative; overflow: hidden; display: block;">
+                                    <img src="${dataUrl}" style="width: 794px; height: 1123px; max-width: 794px; max-height: 1123px; display: block; object-fit: fill; pointer-events: none;" alt="Page ${i}">
+                                    ${textLayerHtml}
+                                </div>
+                            `;
+                        }
+
+                        if (customHtmlInput) customHtmlInput.value = pagesHtml;
+                        if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> ${escapeAuditHtml(fileName)}`;
+                        if (dropSub) dropSub.textContent = `PDF template parsed (${numPages} pages). Exact design, placement, and typography preserved.`;
+                        if (dropIcon) dropIcon.className = "fa-solid fa-file-pdf text-rose";
+                        showToast(`📄 Parsed ${numPages}-page PDF template with exact layout & design`);
+                        resolve(pagesHtml);
+                    } catch (pdfErr) {
+                        console.error("PDF parse error:", pdfErr);
+                        if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-file-pdf text-rose"></i> ${escapeAuditHtml(fileName)}`;
+                        if (dropSub) dropSub.textContent = `Attached PDF document (${(file.size / 1024).toFixed(1)} KB)`;
+                        showToast(`Attached PDF file "${fileName}"`);
+                        resolve();
+                    }
+                };
+                reader.onerror = () => resolve();
+                reader.readAsArrayBuffer(file);
             } else {
                 if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-file-pdf text-rose"></i> ${escapeAuditHtml(fileName)}`;
                 if (dropSub) dropSub.textContent = `PDF document attached (${(file.size / 1024).toFixed(1)} KB)`;
@@ -5151,46 +5252,28 @@ window.handleModalTemplateFileSelected = async function(input) {
         try {
             const text = await file.text();
             const data = JSON.parse(text);
-            const t = Array.isArray(data) ? data[0] : (data.templates && data.templates[0]) || data;
+            const t = Array.isArray(data) ? data[0] : (data.templates ? data.templates[0] : data);
             if (t) {
                 if (nameInput && t.name) nameInput.value = t.name;
-                const custSelect = document.getElementById("editTemplateCustomerSelect");
-                if (custSelect && (t.customer || t.clientName)) {
-                    custSelect.value = t.customer || t.clientName;
-                }
-                if (fmtSelect && (t.typeFormat || t.type)) {
-                    const f = String(t.typeFormat || t.type).toLowerCase();
-                    fmtSelect.value = f.includes('monthly') ? 'monthly' : f.includes('pptx') ? 'pptx' : f.includes('docx') ? 'docx' : 'weekly';
-                }
-                const forewordInput = document.getElementById("editTemplateReportTitleInput");
-                if (forewordInput && t.docTitle) forewordInput.value = t.docTitle;
-                const fwInput = document.getElementById("editTemplateForewordInput");
-                if (fwInput && t.foreword) fwInput.value = t.foreword;
-                const objectivesInput = document.getElementById("editTemplateObjectivesInput");
-                if (objectivesInput && t.objectives) objectivesInput.value = t.objectives;
+                if (fmtSelect && t.type) fmtSelect.value = t.type;
+                if (clientSelect && t.customer) clientSelect.value = t.customer;
                 if (customHtmlInput && t.content) customHtmlInput.value = t.content;
+                const repTitle = document.getElementById("editTemplateReportTitleInput");
+                if (repTitle && (t.docTitle || t.name)) repTitle.value = t.docTitle || t.name;
+                const fore = document.getElementById("editTemplateForewordInput");
+                if (fore && t.foreword) fore.value = t.foreword;
+                const obj = document.getElementById("editTemplateObjectivesInput");
+                if (obj && t.objectives) obj.value = t.objectives;
+
+                if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> ${escapeAuditHtml(fileName)}`;
+                if (dropSub) dropSub.textContent = `Imported JSON template "${t.name}" (${t.pages || 1} pages).`;
+                if (dropIcon) dropIcon.className = "fa-solid fa-code text-indigo";
+                showToast(`Imported Template JSON: "${t.name}"`);
             }
-            if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> ${escapeAuditHtml(fileName)}`;
-            if (dropSub) dropSub.textContent = `JSON Template configuration parsed and populated.`;
-            if (dropIcon) dropIcon.className = "fa-solid fa-file-code text-warning";
-            showToast(`Loaded template configuration from ${fileName}`);
-        } catch (e) {
-            console.error("JSON parse error:", e);
-            showToast("Failed to parse JSON file.");
+        } catch (jsonErr) {
+            console.error("Template JSON parse error:", jsonErr);
+            showToast("Failed to parse JSON template file.", "error");
         }
-    } else if (ext === 'pptx' || ext === 'ppt') {
-        if (fmtSelect) fmtSelect.value = 'pptx';
-        if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-file-powerpoint" style="color:#f97316;"></i> ${escapeAuditHtml(fileName)}`;
-        if (dropSub) dropSub.textContent = `PowerPoint Template attached (${(file.size / 1024).toFixed(1)} KB)`;
-        if (dropIcon) dropIcon.className = "fa-solid fa-file-powerpoint";
-        showToast(`PowerPoint template "${fileName}" attached.`);
-    } else if (ext === 'html' || ext === 'htm') {
-        const text = await file.text();
-        if (customHtmlInput) customHtmlInput.value = typeof sanitizeTemplateHtml === 'function' ? sanitizeTemplateHtml(text) : text;
-        if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> ${escapeAuditHtml(fileName)}`;
-        if (dropSub) dropSub.textContent = `HTML template parsed into custom HTML content.`;
-        if (dropIcon) dropIcon.className = "fa-solid fa-file-code text-blue";
-        showToast(`Loaded HTML file into template editor.`);
     } else {
         if (dropTitle) dropTitle.innerHTML = `<i class="fa-solid fa-paperclip text-blue"></i> ${escapeAuditHtml(fileName)}`;
         if (dropSub) dropSub.textContent = `File attached (${(file.size / 1024).toFixed(1)} KB)`;
@@ -5322,46 +5405,51 @@ window.openAddClientModal = function(defaultName) {
     const modal = document.getElementById("addClientModal");
     if (!modal) return;
 
-    let currentClient = defaultName;
-    if (!currentClient || currentClient === "CLIENT NAME" || currentClient === "TENANT") {
-        currentClient = AppState.activeClient || (document.getElementById("studioClientSelect")?.value) || "";
+    modal.style.zIndex = "10050";
+
+    // Determine target tenant name
+    let currentClient = "";
+    if (defaultName && typeof defaultName === 'string') {
+        const trimmed = defaultName.trim();
+        if (isValidClientName(trimmed)) {
+            currentClient = trimmed;
+        }
     }
-    if (currentClient === "CLIENT NAME" || currentClient === "TENANT") currentClient = "";
+
+    const titleText = document.getElementById("addClientModalTitleText");
+    if (titleText) {
+        titleText.textContent = currentClient ? `Tenant & Logo: ${currentClient}` : "Add New Tenant & Logo";
+    }
 
     const nameInput = document.getElementById("addClientNameInput");
     if (nameInput) {
         nameInput.value = currentClient;
     }
 
-    const previewWrap = document.getElementById("addClientLogoPreviewWrap");
-    const previewImg = document.getElementById("addClientLogoPreviewImg");
-    const dropzoneContent = document.getElementById("addClientDropzoneContent");
-    const ribbonText = document.getElementById("addClientModalRibbonText");
-    const ribbonLogoImg = document.getElementById("addClientModalRibbonLogoImg");
+    const fileInput = document.getElementById("addClientLogoFileInput");
+    if (fileInput) fileInput.value = "";
 
     const existingLogo = currentClient ? getClientLogo(currentClient) : null;
     window._tempAddClientLogo = existingLogo || null;
 
-    if (existingLogo && previewWrap && previewImg && dropzoneContent) {
-        previewImg.src = existingLogo;
-        previewWrap.style.display = "block";
-        dropzoneContent.style.display = "none";
-    } else if (previewWrap && dropzoneContent) {
-        previewWrap.style.display = "none";
-        dropzoneContent.style.display = "flex";
+    const namePreview = document.getElementById("modalClientLogoNamePreview");
+    if (namePreview) {
+        namePreview.textContent = (currentClient || "TENANT").toUpperCase();
     }
 
-    if (ribbonText) {
-        ribbonText.textContent = (currentClient || "TENANT").toUpperCase();
-    }
-    if (ribbonLogoImg) {
-        if (existingLogo) {
-            ribbonLogoImg.src = existingLogo;
-            ribbonLogoImg.style.display = "inline-block";
-        } else {
-            ribbonLogoImg.removeAttribute("src");
-            ribbonLogoImg.style.display = "none";
+    const imgBox = document.getElementById("modalClientLogoImgBox");
+    const removeBtn = document.getElementById("btnModalRemoveClientLogo");
+
+    if (existingLogo && imgBox) {
+        imgBox.innerHTML = `<img src="${existingLogo}" alt="Logo" style="height:22px; max-width:65px; object-fit:contain; border-radius:2px; vertical-align:middle;">`;
+        imgBox.style.display = "inline-block";
+        if (removeBtn) removeBtn.style.display = "inline-flex";
+    } else {
+        if (imgBox) {
+            imgBox.innerHTML = "";
+            imgBox.style.display = "none";
         }
+        if (removeBtn) removeBtn.style.display = "none";
     }
 
     if (typeof setAddClientCadence === 'function') {
@@ -5371,7 +5459,10 @@ window.openAddClientModal = function(defaultName) {
     modal.classList.remove("hidden");
     modal.style.display = "flex";
     setTimeout(() => {
-        if (nameInput && !nameInput.value) nameInput.focus();
+        if (nameInput) {
+            nameInput.focus();
+            if (currentClient && nameInput.select) nameInput.select();
+        }
     }, 120);
 };
 
@@ -5387,27 +5478,24 @@ window.closeAddClientModal = function() {
 };
 
 window.syncModalClientNamePreview = function(name) {
-    const ribbonText = document.getElementById("addClientModalRibbonText");
-    if (ribbonText) {
-        ribbonText.textContent = (name || "TENANT").toUpperCase();
+    const raw = (name && typeof name === 'string') ? name.trim() : "";
+    const namePreview = document.getElementById("modalClientLogoNamePreview");
+    if (namePreview) {
+        namePreview.textContent = raw ? raw.toUpperCase() : "TENANT";
     }
-    if (!window._tempAddClientLogo && name && name.trim()) {
-        const existingLogo = getClientLogo(name.trim());
+
+    // If no logo has been picked in this session yet, check if an existing logo exists for this name
+    if (!window._tempAddClientLogo && raw) {
+        const existingLogo = getClientLogo(raw);
         if (existingLogo) {
             window._tempAddClientLogo = existingLogo;
-            const previewWrap = document.getElementById("addClientLogoPreviewWrap");
-            const previewImg = document.getElementById("addClientLogoPreviewImg");
-            const dropzoneContent = document.getElementById("addClientDropzoneContent");
-            const ribbonLogoImg = document.getElementById("addClientModalRibbonLogoImg");
-            if (previewWrap && previewImg && dropzoneContent) {
-                previewImg.src = existingLogo;
-                previewWrap.style.display = "block";
-                dropzoneContent.style.display = "none";
+            const imgBox = document.getElementById("modalClientLogoImgBox");
+            const removeBtn = document.getElementById("btnModalRemoveClientLogo");
+            if (imgBox) {
+                imgBox.innerHTML = `<img src="${existingLogo}" alt="Logo" style="height:22px; max-width:65px; object-fit:contain; border-radius:2px; vertical-align:middle;">`;
+                imgBox.style.display = "inline-block";
             }
-            if (ribbonLogoImg) {
-                ribbonLogoImg.src = existingLogo;
-                ribbonLogoImg.style.display = "inline-block";
-            }
+            if (removeBtn) removeBtn.style.display = "inline-flex";
         }
     }
 };
@@ -5426,36 +5514,29 @@ window.handleAddClientLogoFileSelected = function(input) {
         const dataUrl = e.target.result;
         window._tempAddClientLogo = dataUrl;
 
-        const previewWrap = document.getElementById("addClientLogoPreviewWrap");
-        const previewImg = document.getElementById("addClientLogoPreviewImg");
-        const dropzoneContent = document.getElementById("addClientDropzoneContent");
-        const ribbonLogoImg = document.getElementById("addClientModalRibbonLogoImg");
+        const imgBox = document.getElementById("modalClientLogoImgBox");
+        const removeBtn = document.getElementById("btnModalRemoveClientLogo");
 
-        if (previewImg) previewImg.src = dataUrl;
-        if (previewWrap) previewWrap.style.display = "block";
-        if (dropzoneContent) dropzoneContent.style.display = "none";
-
-        if (ribbonLogoImg) {
-            ribbonLogoImg.src = dataUrl;
-            ribbonLogoImg.style.display = "inline-block";
+        if (imgBox) {
+            imgBox.innerHTML = `<img src="${dataUrl}" alt="Logo" style="height:22px; max-width:65px; object-fit:contain; border-radius:2px; vertical-align:middle;">`;
+            imgBox.style.display = "inline-block";
         }
+        if (removeBtn) removeBtn.style.display = "inline-flex";
     };
     reader.readAsDataURL(file);
 };
 
 window.removeModalClientLogo = function() {
     window._tempAddClientLogo = "";
-    const previewWrap = document.getElementById("addClientLogoPreviewWrap");
-    const dropzoneContent = document.getElementById("addClientDropzoneContent");
-    const ribbonLogoImg = document.getElementById("addClientModalRibbonLogoImg");
+    const imgBox = document.getElementById("modalClientLogoImgBox");
+    const removeBtn = document.getElementById("btnModalRemoveClientLogo");
     const fileInput = document.getElementById("addClientLogoFileInput");
 
-    if (previewWrap) previewWrap.style.display = "none";
-    if (dropzoneContent) dropzoneContent.style.display = "flex";
-    if (ribbonLogoImg) {
-        ribbonLogoImg.removeAttribute("src");
-        ribbonLogoImg.style.display = "none";
+    if (imgBox) {
+        imgBox.innerHTML = "";
+        imgBox.style.display = "none";
     }
+    if (removeBtn) removeBtn.style.display = "none";
     if (fileInput) fileInput.value = "";
 
     const nameInput = document.getElementById("addClientNameInput");
@@ -5472,69 +5553,179 @@ window.saveAddClientModal = function() {
         if (nameInput) nameInput.focus();
         return;
     }
-
-    // Register customer
-    if (typeof registerNewCustomerName === 'function') {
-        registerNewCustomerName(rawName);
+    if (!isValidClientName(rawName)) {
+        alert(`"${rawName}" is a reserved system keyword. Please enter a valid Tenant / Organization name.`);
+        if (nameInput) nameInput.focus();
+        return;
     }
 
-    // Save logo if selected
+    // 1. Save logo if selected or cleared
     if (window._tempAddClientLogo) {
         setClientLogo(rawName, window._tempAddClientLogo);
     } else if (window._tempAddClientLogo === "") {
         setClientLogo(rawName, null);
     }
 
-    // Update active client in AppState
+    // 2. Register customer with state and backend
+    if (!AppState.customCustomers) AppState.customCustomers = [];
+    if (!AppState.customCustomers.includes(rawName)) {
+        AppState.customCustomers.push(rawName);
+        try {
+            localStorage.setItem("altisec_custom_customers", JSON.stringify(AppState.customCustomers));
+        } catch (e) {}
+
+        try {
+            fetch("/api/customers/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: rawName })
+            });
+        } catch (e) {}
+    }
+
+    // 3. Update active client in AppState
     AppState.activeClient = rawName;
     AppState.properties.clientName = rawName.toUpperCase();
 
-    // Populate all client dropdowns
-    document.querySelectorAll(".activeClientSelect, #headerCustomerSelect, #studioClientSelect, #editTemplateCustomerSelect, #tplHubClientSelect").forEach(sel => {
-        let opt = sel.querySelector(`option[value="${rawName}"]`);
+    // 4. Check if templateEditorModal is open
+    const tplEditorModal = document.getElementById("templateEditorModal");
+    const isTplEditorOpen = tplEditorModal && window.getComputedStyle(tplEditorModal).display !== "none";
+
+    // 5. Populate all client selects everywhere
+    populateAllClientSelects();
+
+    // 6. Explicitly select the new tenant in all relevant dropdowns
+    const selectsToUpdate = [
+        document.getElementById("editTemplateCustomerSelect"),
+        document.getElementById("studioClientSelect"),
+        document.getElementById("headerCustomerSelect"),
+        ...Array.from(document.querySelectorAll(".activeClientSelect"))
+    ].filter(Boolean);
+
+    selectsToUpdate.forEach(sel => {
+        let opt = Array.from(sel.options).find(o => o.value === rawName);
         if (!opt) {
             opt = document.createElement("option");
             opt.value = rawName;
             opt.textContent = rawName;
-            sel.appendChild(opt);
+            const addOpt = Array.from(sel.options).find(o => o.value === "__add_new_client__");
+            if (addOpt) {
+                sel.insertBefore(opt, addOpt);
+            } else {
+                sel.appendChild(opt);
+            }
         }
         sel.value = rawName;
     });
 
-    // Map assigned template if selected
-    const assignedTemplate = document.getElementById("addClientTemplateSelect")?.value;
-    if (assignedTemplate) {
-        if (!AppState.clientMapping) AppState.clientMapping = {};
-        AppState.clientMapping[rawName] = assignedTemplate;
-        AppState.activeTemplate = assignedTemplate;
-        try {
-            localStorage.setItem("altisec_client_mapping", JSON.stringify(AppState.clientMapping));
-        } catch(e) {}
-        document.querySelectorAll(".activeTemplateSelect, #headerTemplateSelect, #studioTemplateSelect").forEach(s => s.value = assignedTemplate);
+    // 7. Update logo in templateEditorModal if open
+    if (isTplEditorOpen && typeof syncTemplateModalClientLogo === 'function') {
+        syncTemplateModalClientLogo(rawName);
     }
 
+    // 8. Map assigned template if selected from within addClientModal AND templateEditorModal is NOT open
+    if (!isTplEditorOpen) {
+        const assignedTemplate = document.getElementById("addClientTemplateSelect")?.value;
+        if (assignedTemplate) {
+            if (!AppState.clientMapping) AppState.clientMapping = {};
+            AppState.clientMapping[rawName] = assignedTemplate;
+            AppState.activeTemplate = assignedTemplate;
+            try {
+                localStorage.setItem("altisec_client_mapping", JSON.stringify(AppState.clientMapping));
+            } catch(e) {}
+            document.querySelectorAll(".activeTemplateSelect, #headerTemplateSelect, #studioTemplateSelect").forEach(s => s.value = assignedTemplate);
+        }
+    }
+
+    // 9. Close the modal
     closeAddClientModal();
 
+    // 10. Update views and live preview
+    if (typeof refreshTemplateViews === 'function') {
+        refreshTemplateViews();
+    } else if (typeof renderTemplatesHubView === 'function') {
+        renderTemplatesHubView();
+    }
     if (typeof syncFormInputsFromState === 'function') {
         syncFormInputsFromState();
     }
-    if (typeof renderLivePreview === 'function') {
+    if (!isTplEditorOpen && typeof renderLivePreview === 'function') {
         renderLivePreview();
     }
+
     if (typeof showToast === 'function') {
         showToast(`✓ Tenant "${rawName}" & logo saved!`);
     }
+};
+
+window.handleTemplateInlineTenantInput = function(val) {
+    const previewBox = document.getElementById("tplClientLogoPreviewBox");
+    const name = (val || "").trim();
+    if (!name) {
+        if (previewBox) previewBox.innerHTML = '<i class="fa-solid fa-building" style="color:#64748b; font-size:16px;"></i>';
+        return;
+    }
+    const logoData = typeof getClientLogo === 'function' ? getClientLogo(name) : null;
+    if (logoData && previewBox) {
+        previewBox.innerHTML = `<img src="${logoData}" style="max-height:100%; max-width:100%; object-fit:contain; border-radius:3px;" alt="Logo">`;
+    } else if (previewBox) {
+        previewBox.innerHTML = `<span style="font-size:10px; font-weight:800; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px;">${escapeAuditHtml(name.substring(0, 8))}</span>`;
+    }
+};
+
+window.toggleTemplateInlineTenantInput = function() {
+    const box = document.getElementById("templateInlineTenantBox");
+    const inp = document.getElementById("editTemplateInlineTenantInput");
+    if (!box) return;
+    if (box.style.display === "none") {
+        box.style.display = "block";
+        if (inp) {
+            inp.focus();
+            if (inp.value) handleTemplateInlineTenantInput(inp.value);
+        }
+    } else {
+        box.style.display = "none";
+        if (inp) inp.value = "";
+        const custSelect = document.getElementById("editTemplateCustomerSelect");
+        if (custSelect) syncTemplateModalClientLogo(custSelect.value);
+    }
+};
+
+window.showTemplateInlineTenantInput = function() {
+    const box = document.getElementById("templateInlineTenantBox");
+    const inp = document.getElementById("editTemplateInlineTenantInput");
+    if (box) box.style.display = "block";
+    if (inp) {
+        inp.focus();
+        if (inp.value) handleTemplateInlineTenantInput(inp.value);
+    }
+};
+
+window.cancelTemplateInlineTenantInput = function() {
+    const box = document.getElementById("templateInlineTenantBox");
+    const inp = document.getElementById("editTemplateInlineTenantInput");
+    if (box) box.style.display = "none";
+    if (inp) inp.value = "";
+    const custSelect = document.getElementById("editTemplateCustomerSelect");
+    if (custSelect) syncTemplateModalClientLogo(custSelect.value);
 };
 
 window.handleTemplateClientLogoSelected = function(input) {
     const file = input && input.files && input.files[0];
     if (!file) return;
 
+    const inlineCust = document.getElementById("editTemplateInlineTenantInput")?.value.trim();
     const custSelect = document.getElementById("editTemplateCustomerSelect");
-    const clientName = custSelect ? custSelect.value.trim() : "";
-    if (!clientName || clientName === "Global / All Clients" || clientName === "Global / All Tenants") {
-        alert("Please select or add a specific Tenant/Customer before uploading a logo.");
-        return;
+    let clientName = inlineCust || (custSelect ? custSelect.value.trim() : "");
+    if (!clientName || clientName === "Global / All Clients" || clientName === "Global / All Tenants" || clientName === "__add_new_client__") {
+        const prompted = prompt("Please enter the Tenant / Organization name for this logo:");
+        if (!prompted || !prompted.trim()) {
+            if (input) input.value = "";
+            return;
+        }
+        clientName = prompted.trim();
+        registerNewCustomerName(clientName);
+        if (custSelect) custSelect.value = clientName;
     }
 
     const reader = new FileReader();
@@ -5554,9 +5745,10 @@ window.handleTemplateClientLogoSelected = function(input) {
 };
 
 window.removeTemplateClientLogo = function() {
+    const inlineCust = document.getElementById("editTemplateInlineTenantInput")?.value.trim();
     const custSelect = document.getElementById("editTemplateCustomerSelect");
-    const clientName = custSelect ? custSelect.value.trim() : "";
-    if (clientName && clientName !== "Global / All Clients") {
+    const clientName = inlineCust || (custSelect ? custSelect.value.trim() : "");
+    if (clientName && clientName !== "Global / All Clients" && clientName !== "Global / All Tenants") {
         setClientLogo(clientName, null);
         syncTemplateModalClientLogo(clientName);
     }
@@ -5573,13 +5765,24 @@ window.removeTemplateClientLogo = function() {
 };
 
 window.syncTemplateModalClientLogo = function(clientName) {
+    if (clientName === "__add_new_client__") {
+        const custSelect = document.getElementById("editTemplateCustomerSelect");
+        if (custSelect) custSelect.value = "Global / All Clients";
+        if (typeof showTemplateInlineTenantInput === 'function') {
+            showTemplateInlineTenantInput();
+        } else if (typeof openAddClientModal === 'function') {
+            openAddClientModal();
+        }
+        return;
+    }
+
     const previewBox = document.getElementById("tplClientLogoPreviewBox");
     const removeBtn = document.getElementById("btnRemoveTplClientLogo");
     const statusText = document.getElementById("tplClientLogoStatus");
 
     if (!previewBox) return;
 
-    if (!clientName || clientName === "Global / All Clients") {
+    if (!clientName || clientName === "Global / All Clients" || clientName === "Global / All Tenants") {
         previewBox.innerHTML = '<i class="fa-solid fa-building" style="color:#64748b; font-size:16px;"></i>';
         if (removeBtn) removeBtn.style.display = "none";
         if (statusText) statusText.textContent = "Placed in left ribbon";
@@ -5835,11 +6038,15 @@ window.closeTemplateEditorModal = function() {
 window.saveTemplateFromModal = async function() {
     const templateId = document.getElementById("editTemplateIdHidden")?.value || ("custom-tpl-" + Date.now());
     const name = document.getElementById("editTemplateNameInput")?.value.trim();
-    const customer = document.getElementById("editTemplateCustomerSelect")?.value || "Global / All Clients";
-    const layoutRow = document.getElementById("modalTemplateLayoutAndTitleRow");
+    
+    // Get customer from inline input or dropdown
+    const inlineCust = document.getElementById("editTemplateInlineTenantInput")?.value.trim();
+    let customer = inlineCust || document.getElementById("editTemplateCustomerSelect")?.value || "Global / All Clients";
+    if (customer === "__add_new_client__") {
+        customer = "Global / All Clients";
+    }
+
     const customHtml = document.getElementById("editTemplateCustomHtmlInput")?.value.trim() || "";
-    const isCustomDoc = !layoutRow || layoutRow.style.display === "none" || (customHtml && customHtml.length > 0);
-    const baseTemplate = isCustomDoc ? "custom" : (document.getElementById("editTemplateBaseSelect")?.value || "custom");
     const cadence = document.getElementById("editTemplateFormatSelect")?.value || "weekly";
     const isCadence = (cadence === 'cadence' || cadence === 'pptx');
     const isMonthly = (cadence === 'monthly');
@@ -5854,27 +6061,50 @@ window.saveTemplateFromModal = async function() {
         return;
     }
 
+    // Auto-register new tenant if user typed or selected a valid tenant name
+    if (customer && customer !== "Global / All Clients" && customer !== "Global / All Tenants" && isValidClientName(customer)) {
+        customer = customer.trim();
+        registerNewCustomerName(customer);
+        AppState.activeClient = customer;
+        AppState.properties.clientName = customer.toUpperCase();
+        if (typeof syncTemplateModalClientLogo === 'function') {
+            syncTemplateModalClientLogo(customer);
+        }
+    }
+
     if (!AppState.customTemplates) AppState.customTemplates = [];
 
     const isNew = !AppState.customTemplates.some(t => t.id === templateId);
-    const allBase = [...WEEKLY_BASE_TEMPLATES, ...MONTHLY_BASE_TEMPLATES, ...CADENCE_BASE_TEMPLATES];
-    const baseMatch = allBase.find(t => t.id === baseTemplate);
-
     const existingIdx = AppState.customTemplates.findIndex(t => t.id === templateId);
     const existingTpl = existingIdx >= 0 ? AppState.customTemplates[existingIdx] : null;
     const docxBase64 = window._lastUploadedDocxBase64 || (existingTpl ? existingTpl.docxBase64 : null);
     const isDocxTemplate = !!docxBase64 || (existingTpl ? existingTpl.isDocxTemplate : false);
     const pdfBase64 = window._lastUploadedPdfBase64 || (existingTpl ? existingTpl.pdfBase64 : null);
-    const isPdfTemplate = !!pdfBase64 || (existingTpl ? existingTpl.isPdfTemplate : false);
+    const isPdfTemplate = !!pdfBase64 || (existingTpl ? existingTpl.isPdfTemplate : false) || customHtml.includes('pdf-page-card');
 
-    let pageCount = 16;
+    const hasUploadedContent = (customHtml && customHtml.length > 0) || isDocxTemplate || isPdfTemplate;
+
+    let baseTemplate;
+    if (hasUploadedContent) {
+        baseTemplate = "custom";
+    } else {
+        const chosenBase = document.getElementById("editTemplateBaseSelect")?.value;
+        if (chosenBase && chosenBase !== "custom") {
+            baseTemplate = chosenBase;
+        } else {
+            baseTemplate = isCadence ? "shai-monthly-management-review" : isMonthly ? "monthly-ttl-june-2026" : "template-firstcheck-3";
+        }
+    }
+
+    const allBase = [...WEEKLY_BASE_TEMPLATES, ...MONTHLY_BASE_TEMPLATES, ...CADENCE_BASE_TEMPLATES];
+    const baseMatch = allBase.find(t => t.id === baseTemplate);
+
+    let pageCount = baseMatch ? baseMatch.pages : (isCadence ? 28 : 16);
     if (customHtml) {
         const matches = customHtml.match(/class=["'][^"']*(?:a4-page-card|docx-page-card|pdf-page-card|section\.docx)[^"']*["']/g) || customHtml.match(/data-sec=/g);
         if (matches && matches.length > 0) {
             pageCount = matches.length;
         }
-    } else if (baseMatch) {
-        pageCount = baseMatch.pages;
     }
 
     let updatedTpl = {
@@ -5889,7 +6119,7 @@ window.saveTemplateFromModal = async function() {
         docTitle: docTitle,
         foreword: foreword,
         objectives: objectives,
-        content: customHtml,
+        content: hasUploadedContent ? customHtml : "",
         docxBase64: docxBase64,
         isDocxTemplate: isDocxTemplate,
         pdfBase64: pdfBase64,
@@ -5907,7 +6137,6 @@ window.saveTemplateFromModal = async function() {
         AppState.customTemplates.unshift(updatedTpl);
     }
     window._lastUploadedDocxBase64 = null;
-    window._lastUploadedPdfBase64 = null;
 
     // Persist to IDB, server API, and localStorage
     if (typeof persistCustomTemplate === 'function') {
@@ -5918,7 +6147,7 @@ window.saveTemplateFromModal = async function() {
     }
 
     // Save client template mapping
-    if (customer && customer !== 'Global / All Clients') {
+    if (customer && customer !== 'Global / All Clients' && customer !== 'Global / All Tenants') {
         if (!AppState.clientMapping) AppState.clientMapping = {};
         AppState.clientMapping[customer] = templateId;
         try {
@@ -5926,10 +6155,18 @@ window.saveTemplateFromModal = async function() {
         } catch(e) {}
     }
 
+    // Ensure all client selects everywhere are up to date and point to the newly assigned customer
+    populateAllClientSelects();
+    if (customer && customer !== 'Global / All Clients' && customer !== 'Global / All Tenants') {
+        document.querySelectorAll(".activeClientSelect, #headerCustomerSelect, #studioClientSelect").forEach(s => {
+            s.value = customer;
+        });
+    }
+
     // If currently active template is the one being edited, update live preview properties
     if (AppState.activeTemplate === templateId) {
         AppState.properties.template = name;
-        if (customer && customer !== 'Global / All Clients') {
+        if (customer && customer !== 'Global / All Clients' && customer !== 'Global / All Tenants') {
             AppState.properties.clientName = customer.toUpperCase();
         }
         if (typeof renderLivePreview === 'function') renderLivePreview();
@@ -8161,8 +8398,8 @@ function renderLivePreview() {
         customHtml = customHtml.replace(/\{\{clientName\}\}/gi, targetTenant);
         customHtml = customHtml.replace(/\{\{tenantName\}\}/gi, targetTenant);
 
-        const isDocxHtml = ownTpl.isDocxTemplate || customHtml.includes("docx-page-card") || customHtml.includes("section.docx") || customHtml.includes("class=\"docx\"") || customHtml.includes("class='docx'");
-        const isPdfHtml = ownTpl.isPdfTemplate || customHtml.includes("pdf-page-card");
+        const isDocxHtml = customHtml.includes("docx-page-card") || customHtml.includes("section.docx") || customHtml.includes("class=\"docx\"") || customHtml.includes("class='docx'");
+        const isPdfHtml = customHtml.includes("pdf-page-card") || (ownTpl && ownTpl.isPdfTemplate);
         // If customHtml has not yet been split into A4 section cards, convert it
         if (!isDocxHtml && !isPdfHtml && !customHtml.includes("a4-page-card") && !customHtml.includes("cover-page-card")) {
             customHtml = convertUploadedDocumentToReportPages(customHtml, ownTpl.name, targetTenant);
@@ -8170,39 +8407,59 @@ function renderLivePreview() {
 
         container.innerHTML = customHtml;
 
-        // Ensure docx sections retain page card classes, shadow, and filter out blank phantom pages
-        const docxSections = container.querySelectorAll("section.docx");
+        // Ensure docx sections retain page card classes, shadow, and floating anchor fix
+        const docxSections = container.querySelectorAll("section.docx, .docx-page-card");
         if (docxSections.length > 0) {
-            let validPageCount = 0;
-            docxSections.forEach((sec) => {
-                const text = sec.innerText.trim();
-                const hasImg = sec.querySelectorAll("img").length > 0;
-                const hasSvg = sec.querySelectorAll("svg").length > 0;
-                const hasTbl = sec.querySelectorAll("table").length > 0;
-
-                // Skip completely empty blank spacer pages generated by Word page breaks
-                if (!text && !hasImg && !hasSvg && !hasTbl) {
-                    sec.style.display = "none";
-                    return;
-                }
-                validPageCount++;
+            docxSections.forEach((sec, idx) => {
                 sec.classList.add("a4-page-card", "docx-page-card");
-                sec.setAttribute("data-sec", `docx-page-${validPageCount}`);
+                sec.setAttribute("data-sec", `docx-page-${idx + 1}`);
+                sec.style.width = "794px";
+                sec.style.minWidth = "794px";
+                sec.style.maxWidth = "794px";
+                sec.style.minHeight = "1123px";
                 sec.style.margin = "0 auto 30px auto";
                 sec.style.boxShadow = "0 4px 15px rgba(0,0,0,0.08)";
                 sec.style.borderRadius = "4px";
                 sec.style.background = "#ffffff";
                 sec.style.position = "relative";
                 sec.style.boxSizing = "border-box";
+                sec.style.overflow = "hidden";
+                sec.style.padding = "36pt";
+
+                // Fix zero-dimension divs & floating shapes so they take zero vertical line space
+                sec.querySelectorAll('div[style*="width: 0px"], div[style*="width:0px"], div[style*="width: 0pt"]').forEach(d => {
+                    d.style.position = "absolute";
+                    d.style.top = "0";
+                    d.style.left = "0";
+                    d.style.width = "0";
+                    d.style.height = "0";
+                    d.style.margin = "0";
+                    d.style.padding = "0";
+                    d.style.pointerEvents = "none";
+                    d.querySelectorAll("img, svg").forEach(m => {
+                        m.style.position = "absolute";
+                        m.style.pointerEvents = "none";
+                    });
+                });
             });
             const activeBadge = document.getElementById("activePageBadge");
-            if (activeBadge) activeBadge.textContent = `Page 1 / ${validPageCount}`;
-        } else {
-            const pdfCards = container.querySelectorAll(".pdf-page-card, .a4-page-card");
-            if (pdfCards.length > 0) {
-                const activeBadge = document.getElementById("activePageBadge");
-                if (activeBadge) activeBadge.textContent = `Page 1 / ${pdfCards.length}`;
-            }
+            if (activeBadge) activeBadge.textContent = `Page 1 / ${docxSections.length}`;
+        }
+
+        const pdfCards = container.querySelectorAll(".pdf-page-card");
+        if (pdfCards.length > 0) {
+            pdfCards.forEach((c) => {
+                c.style.width = "794px";
+                c.style.minWidth = "794px";
+                c.style.maxWidth = "794px";
+                c.style.height = "1123px";
+                c.style.minHeight = "1123px";
+                c.style.maxHeight = "1123px";
+                c.style.padding = "0";
+                c.style.margin = "0 auto 30px auto";
+            });
+            const activeBadge = document.getElementById("activePageBadge");
+            if (activeBadge) activeBadge.textContent = `Page 1 / ${pdfCards.length}`;
         }
     } 
     // 2. BUILT-IN TEMPLATES:
@@ -16151,8 +16408,19 @@ function getHubTemplates() {
 // Real cover where we have one (master cover art, first embedded image of an uploaded template)
 function hubTemplateThumb(t) {
     if (t.isMaster && typeof image5Img !== "undefined") return image5Img;
-    const m = t.src && typeof t.src.content === "string" && t.src.content.match(/src="(data:image\/[a-z+]+;base64,[^"]{100,})"/);
-    return m ? m[1] : "";
+    if (!t.src || typeof t.src.content !== "string") return "";
+    try {
+        const head = t.src.content.slice(0, 100000);
+        const idx = head.indexOf('src="data:image/');
+        if (idx !== -1) {
+            const start = idx + 5;
+            const end = head.indexOf('"', start);
+            if (end !== -1 && (end - start) > 100) {
+                return head.slice(start, end);
+            }
+        }
+    } catch(e) {}
+    return "";
 }
 
 window.renderTemplatesHubView = function(searchQuery) {
@@ -16166,7 +16434,7 @@ window.renderTemplatesHubView = function(searchQuery) {
     const clientSelect = document.getElementById("tplHubClientSelect");
     if (clientSelect) {
         const currentVal = clientSelect.value || currentTplHubClient || "all";
-        const uniqueClients = Array.from(new Set(all.map(t => t.clientName || "Global / All Tenants").filter(Boolean))).sort();
+        const uniqueClients = Array.from(new Set(all.map(t => t.clientName || "Global / All Tenants").concat(AppState.customCustomers || []).filter(Boolean))).sort();
         clientSelect.innerHTML = `<option value="all">All Tenants (${all.length})</option>` + 
             uniqueClients.map(c => `<option value="${escapeAuditHtml(c)}">${escapeAuditHtml(c)}</option>`).join("");
         if (uniqueClients.includes(currentVal) || currentVal === 'all') {

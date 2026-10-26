@@ -1435,7 +1435,7 @@ body.studio-preview .table-action-btn,
 body.studio-preview .ucs-controls,
 body.studio-preview .ucs-drag-handle,
 body.studio-preview .ucs-card-actions,
-body.studio-preview [data-html2canvas-ignore="true"],
+body.studio-preview #a4DocumentPreview [data-html2canvas-ignore="true"],
 #a4DocumentPreview.export-preview .btn-section-designs,
 #a4DocumentPreview.export-preview .section-add-slot,
 #a4DocumentPreview.export-preview .btn-add-section-insert,
@@ -3009,3 +3009,17 @@ body:not(.studio-preview) .report-img-selectable:hover {
     padding: 4px 8px;
 }
 
+
+
+/* ==========================================================================
+   THEME ISOLATION FOR CUSTOM UPLOADED TEMPLATES (DOCX & PDF)
+   Prevents theme overrides from distorting original template design
+   ========================================================================== */
+#a4DocumentPreview:is(.rp-executive, .rp-socops, .rp-minimal, .rp-dark) :is(.docx-page-card, section.docx, .pdf-page-card),
+#a4DocumentPreview:is(.rp-executive, .rp-socops, .rp-minimal, .rp-dark) :is(.docx-page-card, section.docx, .pdf-page-card) :is(h1, h2, h3, h4, p, li, td, th, strong, span, div):not(.fa-solid) {
+    font-family: inherit !important;
+}
+
+#a4DocumentPreview:is(.rp-executive, .rp-socops, .rp-minimal, .rp-dark) :is(.docx-page-card, section.docx, .pdf-page-card) p {
+    line-height: normal !important;
+}
