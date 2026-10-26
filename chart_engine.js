@@ -530,6 +530,18 @@
         host.querySelectorAll(':scope > .ce-html-view, :scope > .ce-state').forEach(n => n.remove());
         ensureEditButton(reg, host);
 
+        if (!canvas.dataset.ceClickBound) {
+            canvas.dataset.ceClickBound = 'true';
+            canvas.style.cursor = 'pointer';
+            canvas.title = 'Click to edit chart design and telemetry data';
+            canvas.addEventListener('click', (e) => {
+                if (typeof studioMode !== 'undefined' && studioMode === 'preview') return;
+                e.preventDefault();
+                e.stopPropagation();
+                open(reg.id);
+            });
+        }
+
         const cfg = draftCfg ? merge(draftCfg) : effective(reg);
         // while the inspector edits this chart's data, preview the draft values instead of the applied data
         const isExporting = !!window.__ce_exporting;

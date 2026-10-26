@@ -140,9 +140,9 @@
                             <button type="button" class="st-icon" onclick="navigateToPrevPage()" title="Previous page" aria-label="Previous page"><i class="fa-solid fa-chevron-up"></i></button>
                             <span class="st-page" id="activePageBadge" aria-live="polite">Page 1 / 1</span>
                             <button type="button" class="st-icon" onclick="navigateToNextPage()" title="Next page" aria-label="Next page"><i class="fa-solid fa-chevron-down"></i></button>
-                            <div class="st-seg" role="group" aria-label="Editor mode" style="display: none !important;">
-                                <button type="button" data-studio-mode="edit" onclick="setStudioMode('edit')" title="Edit mode" aria-pressed="false"><i class="fa-solid fa-pen"></i><span>Edit</span></button>
-                                <button type="button" class="active" data-studio-mode="preview" onclick="setStudioMode('preview')" title="Preview mode" aria-pressed="true"><i class="fa-solid fa-eye"></i><span>Preview</span></button>
+                            <div class="st-seg" role="group" aria-label="Editor mode">
+                                <button type="button" class="active" data-studio-mode="edit" onclick="setStudioMode('edit')" title="Edit mode (add sections, edit images & graphs, table rows/cols)" aria-pressed="true"><i class="fa-solid fa-pen"></i><span>Edit</span></button>
+                                <button type="button" data-studio-mode="preview" onclick="setStudioMode('preview')" title="Preview mode" aria-pressed="false"><i class="fa-solid fa-eye"></i><span>Preview</span></button>
                             </div>
                             <span class="st-sep"></span>
                             <button type="button" class="st-btn st-report-only" id="btnStudioInsertImage" onclick="openImageLibrary('insert')" title="Image Library: insert or manage report images" style="padding: 4px 10px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">

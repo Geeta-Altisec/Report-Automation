@@ -5946,7 +5946,7 @@ window.ensureAllTablesHaveActionBars = function(container) {
     const root = container || document.getElementById('a4DocumentPreview') || document.body;
     if (!root) return;
 
-    const tables = root.querySelectorAll('table.doc-table, table.governance-matrix-table, table[data-table-key]');
+    const tables = root.querySelectorAll('table:not(.ce-table):not(.modal-table):not(.export-ignore-table):not(.repo-table)');
     tables.forEach((table, idx) => {
         let key = table.getAttribute('data-table-key') || table.id;
         if (!key) {
@@ -8452,10 +8452,8 @@ function renderLivePreview() {
     if (typeof initReportImageManagement === 'function') initReportImageManagement(container);
     if (typeof ensureAllSectionsHaveAddOption === 'function') ensureAllSectionsHaveAddOption(container);
     if (typeof ensureAllTablesHaveActionBars === 'function') ensureAllTablesHaveActionBars(container);
-    if (studioMode === 'preview') {
-        document.body.classList.add('studio-preview');
-        container.classList.add('export-preview');
-    }
+    document.body.classList.toggle('studio-preview', studioMode === 'preview');
+    container.classList.toggle('export-preview', studioMode === 'preview');
 }
 
 /* ==========================================================================
@@ -8999,7 +8997,7 @@ const REPORT_PRESETS = {
     dark: { label: 'Dark Analytics', desc: 'Dark pages, bright accents', swatch: ['#0b1220', '#38bdf8', '#1e293b'] }
 };
 
-let studioMode = 'preview';
+let studioMode = 'edit';
 const studioHistory = { stack: [], pos: 0 };
 
 function studioSectionOrder() {
@@ -9300,6 +9298,10 @@ function moveStudioSection(key, targetIndex) {
 window.setStudioMode = function(mode) {
     studioMode = mode === 'preview' ? 'preview' : 'edit';
     document.body.classList.toggle('studio-preview', studioMode === 'preview');
+    const container = document.getElementById('a4DocumentPreview');
+    if (container) {
+        container.classList.toggle('export-preview', studioMode === 'preview');
+    }
     document.querySelectorAll('[data-studio-mode]').forEach(b => {
         const on = b.dataset.studioMode === studioMode;
         b.classList.toggle('active', on);
@@ -9311,6 +9313,10 @@ window.setStudioMode = function(mode) {
             ChartEngine.close();
             ChartEngine.renderAll(reg => reg.store === 'report');
         }
+    } else {
+        if (typeof ensureAllTablesHaveActionBars === 'function') ensureAllTablesHaveActionBars(container);
+        if (typeof ensureAllSectionsHaveAddOption === 'function') ensureAllSectionsHaveAddOption(container);
+        if (typeof initReportImageManagement === 'function') initReportImageManagement(container);
     }
     initLiveCanvasInlineEditing();
 };
