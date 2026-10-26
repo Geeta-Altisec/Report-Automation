@@ -1176,24 +1176,10 @@
 
                     <!-- ASSIGNED CUSTOMER -->
                     <div class="form-group">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label style="font-size:11.5px; font-weight:700; color:#cbd5e1;">Assigned Tenant / Customer</label>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <button type="button" class="cs-link-btn" id="btnToggleTemplateInlineTenant" onclick="toggleTemplateInlineTenantInput()" style="font-size:10.5px; color:#38bdf8; font-weight:700; background:none; border:none; cursor:pointer;" title="Type a new tenant name directly"><i class="fa-solid fa-pen"></i> Type New Tenant</button>
-                                <span style="color:#475569; font-size:10px;">|</span>
-                                <button type="button" class="cs-link-btn" onclick="openAddClientModal()" style="font-size:10.5px; color:#38bdf8; font-weight:700; background:none; border:none; cursor:pointer;"><i class="fa-solid fa-plus"></i> New Tenant & Logo</button>
-                            </div>
-                        </div>
+                        <label style="font-size:11.5px; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">Assigned Tenant / Customer</label>
                         <select id="editTemplateCustomerSelect" class="styled-select" style="width:100%;" onchange="syncTemplateModalClientLogo(this.value)">
                             <!-- Dynamically populated -->
                         </select>
-                        <div id="templateInlineTenantBox" style="display:none; margin-top:6px;">
-                            <div style="display:flex; gap:6px;">
-                                <input type="text" id="editTemplateInlineTenantInput" class="styled-input" placeholder="Type new tenant name (e.g. JSW)..." style="flex:1; font-size:12px; padding:6px 10px;" oninput="handleTemplateInlineTenantInput(this.value)">
-                                <button type="button" class="st-btn st-secondary" onclick="cancelTemplateInlineTenantInput()" style="padding:6px 10px; font-size:11px;" title="Cancel & use dropdown"><i class="fa-solid fa-times"></i></button>
-                            </div>
-                            <small style="color:#94a3b8; font-size:10.5px; margin-top:3px; display:block;">Typing a new tenant here will automatically create and register this tenant when saving.</small>
-                        </div>
                     </div>
                 </div>
 
@@ -2087,6 +2073,6 @@
     <script src="cadence_deck.js?v=7"></script>
     <script src="cadence_templates.js?v=5"></script>
     <script src="section_designs.js?v=5"></script>
-    <script src="app.js?v=122"></script>
+    <script src="app.js?v=123"></script>
 </body>
 </html>

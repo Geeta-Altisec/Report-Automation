@@ -1,5 +1,21 @@
 [
   {
+    "id": "LOG-1135",
+    "timestamp": "2026-10-26 14:45:28",
+    "category": "report",
+    "categoryName": "Report Edit & Generation",
+    "action": "Template Deleted",
+    "user": "localhost",
+    "details": "[Report: Global / All Tenants - Master Template] Deleted template ID: custom-tpl-1793005716117",
+    "reportId": "template-firstcheck-3",
+    "reportTitle": "Master Template",
+    "changes": null,
+    "status": "SUCCESS",
+    "latency": "65 ms",
+    "sourceIp": "127.0.0.1",
+    "checksum": "4be88d8a...c31e"
+  },
+  {
     "id": "LOG-1134",
     "timestamp": "2026-10-26 14:45:23",
     "category": "report",

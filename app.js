@@ -4732,15 +4732,7 @@ window.openCreateTemplateModal = function(initialValues = {}) {
     if (dropTitle) dropTitle.textContent = "Drop a Word (.docx), PPT or template file here (Optional)";
     if (dropSub) dropSub.textContent = "or click to browse files from your device";
 
-    // Reset inline tenant input if open
-    if (typeof cancelTemplateInlineTenantInput === 'function') {
-        cancelTemplateInlineTenantInput();
-    } else {
-        const inlineBox = document.getElementById("templateInlineTenantBox");
-        const inlineInp = document.getElementById("editTemplateInlineTenantInput");
-        if (inlineBox) inlineBox.style.display = "none";
-        if (inlineInp) inlineInp.value = "";
-    }
+
 
     // Populate customer select
     if (custSelect) {
@@ -4848,10 +4840,7 @@ window.openTemplateEditorModal = function(templateId) {
     if (dropTitle) dropTitle.textContent = "Replace / update content from file (Optional)";
     if (dropSub) dropSub.textContent = "Word (.docx), PowerPoint (.pptx), HTML, or JSON";
 
-    // Reset inline tenant input if open
-    if (typeof cancelTemplateInlineTenantInput === 'function') {
-        cancelTemplateInlineTenantInput();
-    }
+
 
     // Populate customer select
     if (custSelect) {
@@ -5658,65 +5647,12 @@ window.saveAddClientModal = function() {
     }
 };
 
-window.handleTemplateInlineTenantInput = function(val) {
-    const previewBox = document.getElementById("tplClientLogoPreviewBox");
-    const name = (val || "").trim();
-    if (!name) {
-        if (previewBox) previewBox.innerHTML = '<i class="fa-solid fa-building" style="color:#64748b; font-size:16px;"></i>';
-        return;
-    }
-    const logoData = typeof getClientLogo === 'function' ? getClientLogo(name) : null;
-    if (logoData && previewBox) {
-        previewBox.innerHTML = `<img src="${logoData}" style="max-height:100%; max-width:100%; object-fit:contain; border-radius:3px;" alt="Logo">`;
-    } else if (previewBox) {
-        previewBox.innerHTML = `<span style="font-size:10px; font-weight:800; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px;">${escapeAuditHtml(name.substring(0, 8))}</span>`;
-    }
-};
-
-window.toggleTemplateInlineTenantInput = function() {
-    const box = document.getElementById("templateInlineTenantBox");
-    const inp = document.getElementById("editTemplateInlineTenantInput");
-    if (!box) return;
-    if (box.style.display === "none") {
-        box.style.display = "block";
-        if (inp) {
-            inp.focus();
-            if (inp.value) handleTemplateInlineTenantInput(inp.value);
-        }
-    } else {
-        box.style.display = "none";
-        if (inp) inp.value = "";
-        const custSelect = document.getElementById("editTemplateCustomerSelect");
-        if (custSelect) syncTemplateModalClientLogo(custSelect.value);
-    }
-};
-
-window.showTemplateInlineTenantInput = function() {
-    const box = document.getElementById("templateInlineTenantBox");
-    const inp = document.getElementById("editTemplateInlineTenantInput");
-    if (box) box.style.display = "block";
-    if (inp) {
-        inp.focus();
-        if (inp.value) handleTemplateInlineTenantInput(inp.value);
-    }
-};
-
-window.cancelTemplateInlineTenantInput = function() {
-    const box = document.getElementById("templateInlineTenantBox");
-    const inp = document.getElementById("editTemplateInlineTenantInput");
-    if (box) box.style.display = "none";
-    if (inp) inp.value = "";
-    const custSelect = document.getElementById("editTemplateCustomerSelect");
-    if (custSelect) syncTemplateModalClientLogo(custSelect.value);
-};
-
 window.handleTemplateClientLogoSelected = function(input) {
     const file = input && input.files && input.files[0];
     if (!file) return;
 
-    const inlineCust = document.getElementById("editTemplateInlineTenantInput")?.value.trim();
     const custSelect = document.getElementById("editTemplateCustomerSelect");
-    let clientName = inlineCust || (custSelect ? custSelect.value.trim() : "");
+    let clientName = custSelect ? custSelect.value.trim() : "";
     if (!clientName || clientName === "Global / All Clients" || clientName === "Global / All Tenants" || clientName === "__add_new_client__") {
         const prompted = prompt("Please enter the Tenant / Organization name for this logo:");
         if (!prompted || !prompted.trim()) {
@@ -5745,9 +5681,8 @@ window.handleTemplateClientLogoSelected = function(input) {
 };
 
 window.removeTemplateClientLogo = function() {
-    const inlineCust = document.getElementById("editTemplateInlineTenantInput")?.value.trim();
     const custSelect = document.getElementById("editTemplateCustomerSelect");
-    const clientName = inlineCust || (custSelect ? custSelect.value.trim() : "");
+    const clientName = custSelect ? custSelect.value.trim() : "";
     if (clientName && clientName !== "Global / All Clients" && clientName !== "Global / All Tenants") {
         setClientLogo(clientName, null);
         syncTemplateModalClientLogo(clientName);
@@ -5768,9 +5703,7 @@ window.syncTemplateModalClientLogo = function(clientName) {
     if (clientName === "__add_new_client__") {
         const custSelect = document.getElementById("editTemplateCustomerSelect");
         if (custSelect) custSelect.value = "Global / All Clients";
-        if (typeof showTemplateInlineTenantInput === 'function') {
-            showTemplateInlineTenantInput();
-        } else if (typeof openAddClientModal === 'function') {
+        if (typeof openAddClientModal === 'function') {
             openAddClientModal();
         }
         return;
@@ -6039,9 +5972,8 @@ window.saveTemplateFromModal = async function() {
     const templateId = document.getElementById("editTemplateIdHidden")?.value || ("custom-tpl-" + Date.now());
     const name = document.getElementById("editTemplateNameInput")?.value.trim();
     
-    // Get customer from inline input or dropdown
-    const inlineCust = document.getElementById("editTemplateInlineTenantInput")?.value.trim();
-    let customer = inlineCust || document.getElementById("editTemplateCustomerSelect")?.value || "Global / All Clients";
+    // Get customer from dropdown
+    let customer = document.getElementById("editTemplateCustomerSelect")?.value || "Global / All Clients";
     if (customer === "__add_new_client__") {
         customer = "Global / All Clients";
     }
