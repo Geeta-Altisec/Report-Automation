@@ -130,10 +130,17 @@ const AppState = {
     clientLogos: {},
 
     // Custom dynamic table structures & cell overrides: { [tableKey]: innerHTML }
-    customTableData: {}
+    customTableData: {},
+
+    // Section design layout overrides: { [sectionKey]: designId }
+    sectionDesigns: {}
 };
 
 window.AppState = AppState;
+try {
+    const savedDesigns = localStorage.getItem("altisec_section_designs");
+    if (savedDesigns) AppState.sectionDesigns = JSON.parse(savedDesigns);
+} catch (e) { AppState.sectionDesigns = {}; }
 try {
     const savedLogos = localStorage.getItem("altisec_client_logos");
     if (savedLogos) AppState.clientLogos = JSON.parse(savedLogos);

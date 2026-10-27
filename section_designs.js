@@ -10,17 +10,21 @@
  */
 
 // 1. STATE & PERSISTENCE
-if (!window.AppState) window.AppState = {};
-if (!window.AppState.sectionDesigns) {
-    try {
-        window.AppState.sectionDesigns = JSON.parse(localStorage.getItem("altisec_section_designs") || "{}");
-    } catch (e) {
-        window.AppState.sectionDesigns = {};
+function ensureSectionDesignsState() {
+    if (!window.AppState) window.AppState = {};
+    if (!window.AppState.sectionDesigns) {
+        try {
+            window.AppState.sectionDesigns = JSON.parse(localStorage.getItem("altisec_section_designs") || "{}");
+        } catch (e) {
+            window.AppState.sectionDesigns = {};
+        }
     }
+    return window.AppState.sectionDesigns;
 }
 
 window.saveSectionDesigns = function() {
     try {
+        ensureSectionDesignsState();
         localStorage.setItem("altisec_section_designs", JSON.stringify(window.AppState.sectionDesigns || {}));
     } catch (e) {
         console.warn("Error saving section designs:", e);
@@ -28,6 +32,7 @@ window.saveSectionDesigns = function() {
 };
 
 window.getSectionDesign = function(secKey) {
+    ensureSectionDesignsState();
     return (window.AppState.sectionDesigns && window.AppState.sectionDesigns[secKey]) || 'default';
 };
 
@@ -1198,14 +1203,17 @@ function renderDesignLivePreview(sectionKey, designId) {
     const previewContainer = document.getElementById("secDesignLivePreviewContent");
     if (!previewContainer) return;
 
+    ensureSectionDesignsState();
     const prop = window.AppState?.properties || { clientName: 'ALTISEC CLIENT' };
     const metrics = window.AppState?.metrics || {};
 
     let previewHtml = '';
 
     // Temporarily simulate section design
-    const origDesign = window.AppState.sectionDesigns[sectionKey];
-    window.AppState.sectionDesigns[sectionKey] = designId;
+    const origDesign = window.AppState.sectionDesigns ? window.AppState.sectionDesigns[sectionKey] : null;
+    if (window.AppState.sectionDesigns) {
+        window.AppState.sectionDesigns[sectionKey] = designId;
+    }
 
     if (sectionKey === 'risk') {
         previewHtml = window.renderRiskCalculationDesign(prop, metrics);
@@ -1228,8 +1236,10 @@ function renderDesignLivePreview(sectionKey, designId) {
     }
 
     // Restore state
-    if (origDesign) window.AppState.sectionDesigns[sectionKey] = origDesign;
-    else delete window.AppState.sectionDesigns[sectionKey];
+    if (window.AppState.sectionDesigns) {
+        if (origDesign) window.AppState.sectionDesigns[sectionKey] = origDesign;
+        else delete window.AppState.sectionDesigns[sectionKey];
+    }
 
     previewContainer.innerHTML = previewHtml;
 }
